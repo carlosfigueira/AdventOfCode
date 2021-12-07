@@ -16,7 +16,8 @@ namespace AdventOfCode2020
             //Day2.Solve();
             //Day3.Solve();
             //Day4.Solve();
-            Day5.Solve();
+            //Day5.Solve();
+            Day6.Solve();
             //Day15.Solve();
         }
     }
@@ -198,15 +199,6 @@ namespace AdventOfCode2020
 
         class Passport
         {
-            //public string byr;
-            //public string iyr;
-            //public string eyr;
-            //public string hgt;
-            //public string hcl;
-            //public string ecl;
-            //public string pid;
-            //public string cid;
-
             public Dictionary<string, string> fields;
 
             public bool IsValid()
@@ -322,6 +314,68 @@ namespace AdventOfCode2020
                     Console.WriteLine($"Part 2: {seatIds[i] - 1}");
                     break;
                 }
+            }
+        }
+    }
+    
+    class Day6
+    {
+        public static void Solve()
+        {
+            var input = Helpers.LoadInput("input6.txt");
+            int start = 0;
+            int end = 1;
+            var groups = new List<Group>();
+            while (end < input.Length)
+            {
+                while (end < input.Length && !string.IsNullOrWhiteSpace(input[end])) end++;
+                if (end < input.Length)
+                {
+                    groups.Add(new Group { Answers = input.Skip(start).Take(end - start).ToArray() });
+                    start = end + 1;
+                    end = start + 1;
+                }
+            }
+
+            groups.Add(new Group { Answers = input.Skip(start).Take(end - start).ToArray() });
+
+            int part1 = groups.Sum(g => g.QuestionsAnyoneAnsweredYes());
+            Console.WriteLine($"Part 1: {part1}");
+
+            int part2 = groups.Sum(g => g.QuestionsEveryoneAnsweredYes());
+            Console.WriteLine($"Part 2: {part2}");
+        }
+
+        class Group
+        {
+            public string[] Answers;
+
+            public int QuestionsAnyoneAnsweredYes()
+            {
+                bool[] questions = new bool[26];
+                foreach (var answer in Answers)
+                {
+                    foreach (var c in answer)
+                    {
+                        questions[c - 'a'] = true;
+                    }
+                }
+
+                return questions.Sum(q => q ? 1 : 0);
+            }
+
+            public int QuestionsEveryoneAnsweredYes()
+            {
+                int[] questions = new int[26];
+                foreach (var answer in Answers)
+                {
+                    foreach (var c in answer)
+                    {
+                        questions[c - 'a']++;
+                    }
+                }
+
+                return questions.Sum(q => q == Answers.Length ? 1 : 0);
             }
         }
     }
