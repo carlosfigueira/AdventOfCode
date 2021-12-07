@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31829.152
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdventOfCode2021", "AdventOfCode2021\AdventOfCode2021.csproj", "{818511BF-05A2-49F0-B82F-430D3DEBE0C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdventOfCode2020", "AdventOfCode2020\AdventOfCode2020.csproj", "{69C3EEAB-FAC5-4B4B-933C-C928299EEBF0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{818511BF-05A2-49F0-B82F-430D3DEBE0C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{818511BF-05A2-49F0-B82F-430D3DEBE0C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{818511BF-05A2-49F0-B82F-430D3DEBE0C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{818511BF-05A2-49F0-B82F-430D3DEBE0C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69C3EEAB-FAC5-4B4B-933C-C928299EEBF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69C3EEAB-FAC5-4B4B-933C-C928299EEBF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69C3EEAB-FAC5-4B4B-933C-C928299EEBF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69C3EEAB-FAC5-4B4B-933C-C928299EEBF0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4A7D0436-6EBA-44D7-B15B-9BED0239ECFB}
+	EndGlobalSection
+EndGlobal
