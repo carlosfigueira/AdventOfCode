@@ -12,7 +12,7 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            Day7.Solve();
+            Day8.Solve();
         }
 
         static void Day1Part1()
@@ -469,7 +469,6 @@ namespace AdventOfCode2021
 
         class Day7
         {
-            // Part 2 94814673 is too high
             public static void Solve()
             {
                 var input = Helpers.LoadInput("input7.txt")
@@ -514,6 +513,186 @@ namespace AdventOfCode2021
                 }
 
                 Console.WriteLine($"Part 2: {minCostPart2}");
+            }
+        }
+
+        class Day8
+        {
+            public static void Solve()
+            {
+                var testInput = new[]
+                {
+                    "be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe",
+                    "edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc",
+                    "fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg",
+                    "fbegcd cbd adcefb dageb afcb bc aefdc ecdab fgdeca fcdbega | efabcd cedba gadfec cb",
+                    "aecbfdg fbg gf bafeg dbefa fcge gcbea fcaegb dgceab fcbdga | gecf egdcabf bgf bfgea",
+                    "fgeab ca afcebg bdacfeg cfaedg gcfdb baec bfadeg bafgc acf | gebdcfa ecba ca fadegcb",
+                    "dbcfg fgd bdegcaf fgec aegbdf ecdfab fbedc dacgb gdcebf gf | cefg dcbef fcge gbcadfe",
+                    "bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbgef",
+                    "egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb",
+                    "gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce"
+                };
+                var input =
+                    //testInput
+                    Helpers.LoadInput("input8.txt")
+                    .Select(line => Case.Parse(line))
+                    .ToArray();
+
+                var part1 = input.Sum(c => c.NumberOf1_4_7_8());
+                Console.WriteLine($"Part 1: {part1}");
+
+                var part2 = input.Sum(c => c.DecodedOutput());
+                Console.WriteLine($"Part 2: {part2}");
+            }
+
+            public class Case
+            {
+                public string[] SignalPatterns;
+                public string[] Outputs;
+                private Dictionary<string, int> decoding;
+
+                public Case(string[] patterns, string[] outputs)
+                {
+                    this.SignalPatterns = patterns;
+                    this.Outputs = outputs;
+                    this.DecodePatterns();
+                }
+
+                /// <summary>
+                /// Patterns:
+                /// 
+                ///  aaaa     0: abc efg (6)
+                /// b    c    1:   c  f  (2)
+                /// b    c    2: a cde g (5)
+                /// b    c    3: a cd fg (5)
+                ///  dddd     4:  bcd f  (4)
+                /// e    f    5: ab d fg (5)
+                /// e    f    6: ab defg (6)
+                /// e    f    7: a c  f  (3)
+                ///  gggg     8: abcdefg (7)
+                ///           9: abcd fg (6)
+                /// </summary>
+                private void DecodePatterns()
+                {
+                    this.decoding = new Dictionary<string, int>();
+                    char a, b, c = ' ', d = ' ', e, f = ' ', g = ' ';
+                    var one = this.SignalPatterns.First(p => p.Length == 2);
+                    var seven = this.SignalPatterns.First(p => p.Length == 3);
+                    var four = this.SignalPatterns.First(p => p.Length == 4);
+                    var eight = this.SignalPatterns.First(p => p.Length == 7);
+                    string zero = "", two = "", three = "", five = "", six = "", nine = "";
+
+                    AddDecoding(one, 1);
+                    AddDecoding(seven, 7);
+                    AddDecoding(four, 4);
+                    AddDecoding(eight, 8);
+
+                    // Easy one: segment 'a'
+                    a = seven.Except(one).First();
+                    var cfPossibilities = one;
+                    var bdPossibilities = string.Join("", four.Except(one));
+                    var fiveSegments = this.SignalPatterns.Where(p => p.Length == 5).ToArray();
+                    foreach (var fiveSegment in fiveSegments)
+                    {
+                        if (fiveSegment.Contains(bdPossibilities[0]) && fiveSegment.Contains(bdPossibilities[1]))
+                        {
+                            // It's a 5
+                            five = fiveSegment;
+                            AddDecoding(five, 5);
+                            var fgPossibilities = fiveSegment.Except(bdPossibilities).Except(new[] { a }).ToArray();
+                            if (fgPossibilities[0] == cfPossibilities[0] || fgPossibilities[0] == cfPossibilities[1])
+                            {
+                                f = fgPossibilities[0];
+                                g = fgPossibilities[1];
+                            }
+                            else
+                            {
+                                f = fgPossibilities[1];
+                                g = fgPossibilities[0];
+                            }
+
+                            c = cfPossibilities[0] == f ? cfPossibilities[1] : cfPossibilities[0];
+                            break;
+                        }
+                    }
+
+                    // At this point we know a, c, f, g; looking at the other 5-segment numbers (2, 3)
+                    foreach (var fiveSegment in fiveSegments.Except(new[] { five }))
+                    {
+                        var notACFG = fiveSegment.Except(new[] { a, c, f, g }).ToArray();
+                        if (notACFG.Length == 1)
+                        {
+                            // It's a 3, other segment is 'd'
+                            d = notACFG[0];
+                            three = fiveSegment;
+                            AddDecoding(three, 3);
+                            break;
+                        }
+                    }
+
+                    two = fiveSegments.Except(new[] { three, five }).First();
+                    AddDecoding(two, 2);
+                    e = two.Except(new[] { a, c, d, f, g }).First();
+
+                    // At this point we know a, c, d, e, f, g; getting b is trivial
+                    b = eight.Except(new[] { a, c, d, e, f, g }).First();
+
+                    var sixSegments = this.SignalPatterns.Where(p => p.Length == 6).ToArray();
+                    zero = sixSegments.First(s => !s.Contains(d));
+                    six = sixSegments.First(s => !s.Contains(c));
+                    nine = sixSegments.First(s => !s.Contains(e));
+                    AddDecoding(zero, 0);
+                    AddDecoding(six, 6);
+                    AddDecoding(nine, 9);
+                }
+
+                private void AddDecoding(string pattern, int value)
+                {
+                    this.decoding.Add(
+                        string.Join("", pattern.OrderBy(c => c)),
+                        value);
+                }
+
+                private int GetDecoding(string pattern)
+                {
+                    return this.decoding[string.Join("", pattern.OrderBy(c => c))];
+                }
+
+                public static Case Parse(string line)
+                {
+                    string[] parts = line.Split('|');
+                    var patterns = parts[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var outputs = parts[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    return new Case(patterns, outputs);
+                }
+
+                public int NumberOf1_4_7_8()
+                {
+                    int result = 0;
+                    foreach (var output in this.Outputs)
+                    {
+                        switch (output.Length)
+                        {
+                            case 2:
+                            case 3:
+                            case 4:
+                            case 7:
+                                result++;
+                                break;
+                        }
+                    }
+
+                    return result;
+                }
+
+                public int DecodedOutput()
+                {
+                    return 1000 * GetDecoding(this.Outputs[0]) +
+                        100 * GetDecoding(this.Outputs[1]) +
+                        10 * GetDecoding(this.Outputs[2]) +
+                        1 * GetDecoding(this.Outputs[3]);
+                }
             }
         }
     }
