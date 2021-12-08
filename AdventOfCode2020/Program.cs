@@ -18,7 +18,8 @@ namespace AdventOfCode2020
             //Day4.Solve();
             //Day5.Solve();
             //Day6.Solve();
-            Day7.Solve();
+            //Day7.Solve();
+            Day8.Solve();
             //Day15.Solve();
         }
     }
@@ -489,6 +490,127 @@ namespace AdventOfCode2020
                 }
 
                 return new Bag { Holds = holds, Color = color };
+            }
+        }
+    }
+
+    class Day8
+    {
+        public static void Solve()
+        {
+            var testInput = new[]
+            {
+                "nop +0",
+                "acc +1",
+                "jmp +4",
+                "acc +3",
+                "jmp -3",
+                "acc -99",
+                "acc +1",
+                "jmp -4",
+                "acc +6"
+            };
+            var input =
+                //testInput
+                Helpers.LoadInput("input8.txt")
+                .Select(l => Instruction.Parse(l))
+                .ToArray();
+
+            var computer = new Computer(input);
+            computer.RunUntilLoop();
+            Console.WriteLine($"Part 1: {computer.Accumulator}");
+
+            computer.RunSwappingOneJmpNop();
+            Console.WriteLine($"Part 2: {computer.Accumulator}");
+        }
+
+        enum InstructionType { Acc, Jmp, Nop }
+        class Instruction
+        {
+            public InstructionType Type;
+            public int Arg;
+
+            public static Instruction Parse(string line)
+            {
+                var parts = line.Split(' ');
+                var type = Enum.Parse<InstructionType>(parts[0], true);
+                var arg = int.Parse(parts[1]);
+                return new Instruction { Type = type, Arg = arg };
+            }
+        }
+
+        class Computer
+        {
+            public int Accumulator { get; private set; } = 0;
+            private Instruction[] instructions;
+            public Computer(Instruction[] instructions)
+            {
+                this.instructions = instructions;
+            }
+
+            public void RunUntilLoop()
+            {
+                this.Accumulator = 0;
+                int ip = 0;
+                bool[] visited = new bool[this.instructions.Length];
+                while (!visited[ip])
+                {
+                    visited[ip] = true;
+                    var nextInstruction = this.instructions[ip];
+                    RunInstruction(nextInstruction, ref ip);
+                }
+            }
+
+            private void RunInstruction(Instruction instruction, ref int ip)
+            {
+                switch (instruction.Type)
+                {
+                    case InstructionType.Acc:
+                        this.Accumulator += instruction.Arg;
+                        ip++;
+                        break;
+                    case InstructionType.Nop:
+                        ip++;
+                        break;
+                    case InstructionType.Jmp:
+                        ip += instruction.Arg;
+                        break;
+                }
+            }
+
+            public void RunSwappingOneJmpNop()
+            {
+                for (int changedIndex = 0; changedIndex < this.instructions.Length; changedIndex++)
+                {
+                    var instructionType = this.instructions[changedIndex].Type;
+                    if (instructionType == InstructionType.Acc)
+                    {
+                        continue; // Cannot change acc
+                    }
+
+                    try
+                    {
+                        this.instructions[changedIndex].Type = instructionType == InstructionType.Jmp ? InstructionType.Nop : InstructionType.Jmp;
+                        int ip = 0;
+                        bool[] visited = new bool[this.instructions.Length];
+                        this.Accumulator = 0;
+                        while (ip < visited.Length && !visited[ip])
+                        {
+                            visited[ip] = true;
+                            RunInstruction(this.instructions[ip], ref ip);
+                        }
+
+                        if (ip >= visited.Length)
+                        {
+                            // Completed
+                            break;
+                        }
+                    }
+                    finally
+                    {
+                        this.instructions[changedIndex].Type = instructionType;
+                    }
+                }
             }
         }
     }
