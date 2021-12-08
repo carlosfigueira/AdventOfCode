@@ -17,7 +17,8 @@ namespace AdventOfCode2020
             //Day3.Solve();
             //Day4.Solve();
             //Day5.Solve();
-            Day6.Solve();
+            //Day6.Solve();
+            Day7.Solve();
             //Day15.Solve();
         }
     }
@@ -376,6 +377,118 @@ namespace AdventOfCode2020
                 }
 
                 return questions.Sum(q => q == Answers.Length ? 1 : 0);
+            }
+        }
+    }
+
+    class Day7
+    {
+        public static void Solve()
+        {
+            var testRules = new[]
+            {
+                "light red bags contain 1 bright white bag, 2 muted yellow bags.",
+                "dark orange bags contain 3 bright white bags, 4 muted yellow bags.",
+                "bright white bags contain 1 shiny gold bag.",
+                "muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.",
+                "shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.",
+                "dark olive bags contain 3 faded blue bags, 4 dotted black bags.",
+                "vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.",
+                "faded blue bags contain no other bags.",
+                "dotted black bags contain no other bags."
+            };
+            var input =
+                //testRules
+                Helpers.LoadInput("input7.txt")
+                .Select(l => Bag.Parse(l))
+                .ToArray();
+            var carries = input.ToDictionary(b => b.Color, b => b.Holds.Select(t => t.Item1).ToArray());
+            var canBeCarried = new Dictionary<string, List<string>>();
+            foreach (var bag in input)
+            {
+                foreach (var held in bag.Holds)
+                {
+                    if (!canBeCarried.ContainsKey(held.Item1))
+                    {
+                        canBeCarried.Add(held.Item1, new List<string>());
+                    }
+
+                    canBeCarried[held.Item1].Add(bag.Color);
+                }
+            }
+            HashSet<string> visited = new HashSet<string>();
+            visited.Add("shiny gold");
+            Queue<string> toVisit = new Queue<string>();
+            toVisit.Enqueue("shiny gold");
+            int part1 = 0;
+            while (toVisit.Count > 0)
+            {
+                var next = toVisit.Dequeue();
+                if (carries.ContainsKey(next) && next != "shiny gold")
+                {
+                    // Found a bag that can carry a shiny gold
+                    part1++;
+                }
+
+                if (canBeCarried.ContainsKey(next))
+                {
+                    foreach (var nextToEnqueue in canBeCarried[next])
+                    {
+                        if (!visited.Contains(nextToEnqueue))
+                        {
+                            visited.Add(nextToEnqueue);
+                            toVisit.Enqueue(nextToEnqueue);
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine($"Part 1: {part1}");
+
+            int part2 = BagsInside(input.ToDictionary(b => b.Color), "shiny gold");
+            Console.WriteLine($"Part 2: {part2}");
+        }
+
+        private static int BagsInside(Dictionary<string, Bag> allBags, string bagColor)
+        {
+            var bag = allBags[bagColor];
+            if (bag.Holds.Count == 0) return 0;
+            var result = 0;
+            foreach (var heldBag in bag.Holds)
+            {
+                result += (1 + BagsInside(allBags, heldBag.Item1)) * heldBag.Item2;
+            }
+
+            return result;
+        }
+
+        class Bag
+        {
+            public string Color { get; set; }
+            public List<Tuple<string, int>> Holds { get; set; }
+
+            public static Bag Parse(string definition)
+            {
+                string separator = " bags contain";
+                int sepIndex = definition.IndexOf(separator);
+                string color = definition.Substring(0, sepIndex);
+                string holdsDef = definition.Substring(sepIndex + separator.Length).TrimEnd('.');
+                var holds = new List<Tuple<string, int>>();
+                if (holdsDef != " no other bags")
+                {
+                    foreach (var holdDef in holdsDef.Split(','))
+                    {
+                        var def = holdDef.Substring(1)
+                            .TrimEnd('b', 'a', 'g', 's')
+                            .TrimEnd(' '); // remove space and 'bag(s)'
+                        var spaceIndex = def.IndexOf(' ');
+                        var holdNumber = int.Parse(def.Substring(0, spaceIndex));
+                        var holdColor = def.Substring(spaceIndex + 1);
+                        holds.Add(Tuple.Create(holdColor, holdNumber));
+                    }
+                }
+
+                return new Bag { Holds = holds, Color = color };
             }
         }
     }
