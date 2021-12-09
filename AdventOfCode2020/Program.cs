@@ -11,7 +11,6 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Day 15:");
             //Day1.Solve();
             //Day2.Solve();
             //Day3.Solve();
@@ -19,8 +18,9 @@ namespace AdventOfCode2020
             //Day5.Solve();
             //Day6.Solve();
             //Day7.Solve();
-            Day8.Solve();
+            //Day8.Solve();
             //Day15.Solve();
+            Day17.Solve();
         }
     }
 
@@ -644,6 +644,239 @@ namespace AdventOfCode2020
 
                 nextNumber = followingNumber;
                 turn++;
+            }
+        }
+    }
+
+    class Day17
+    {
+        public static void Solve()
+        {
+            var testInputs = new[] { ".#.", "..#", "###" };
+            var input =
+                //testInputs
+                Helpers.LoadInput("input17.txt")
+                ;
+            var board = new Board3D(input);
+            Console.WriteLine($"After 0 iterations, there are {board.ActiveCells} live cells");
+            for (int i = 1; i <= 6; i++)
+            {
+                board.Iterate();
+                Console.WriteLine($"After {i} iterations, there are {board.ActiveCells} live cells");
+            }
+
+            Console.WriteLine($"Part 1: {board.ActiveCells}");
+
+            var board2 = new Board4D(input);
+            Console.WriteLine($"After 0 iterations, there are {board2.ActiveCells} live cells");
+            for (int i = 1; i <= 6; i++)
+            {
+                board2.Iterate();
+                Console.WriteLine($"After {i} iterations, there are {board2.ActiveCells} live cells");
+            }
+
+            Console.WriteLine($"Part 2: {board2.ActiveCells}");
+        }
+
+        class Board3D
+        {
+            HashSet<Tuple<int, int, int>> liveCells;
+            int minX, maxX, minY, maxY, minZ, maxZ;
+
+            public int ActiveCells => this.liveCells.Count;
+
+            public Board3D(string[] initialState)
+            {
+                this.minZ = this.maxZ = 0;
+                this.minX = this.minY = int.MaxValue;
+                this.maxX = this.maxY = int.MinValue;
+                this.liveCells = new HashSet<Tuple<int, int, int>>();
+                for (var y = 0; y < initialState.Length; y++)
+                {
+                    for (int x = 0; x < initialState[y].Length; x++)
+                    {
+                        if (initialState[y][x] == '#')
+                        {
+                            this.liveCells.Add(Tuple.Create(x, y, 0));
+                            this.minX = Math.Min(this.minX, x);
+                            this.maxX = Math.Max(this.maxX, x);
+                            this.minY = Math.Min(this.minY, y);
+                            this.maxY = Math.Max(this.maxY, y);
+                        }
+                    }
+                }
+            }
+
+            public void Iterate()
+            {
+                var newCells = new HashSet<Tuple<int, int, int>>();
+                int newMinX = int.MaxValue;
+                int newMinY = int.MaxValue;
+                int newMinZ = int.MaxValue;
+                int newMaxX = int.MinValue;
+                int newMaxY = int.MinValue;
+                int newMaxZ = int.MinValue;
+                for (int z = this.minZ - 1; z <= this.maxZ + 1; z++)
+                {
+                    for (int y = this.minY - 1; y <= this.maxY + 1; y++)
+                    {
+                        for (int x = this.minX - 1; x <= this.maxX + 1; x++)
+                        {
+                            var currentPosition = Tuple.Create(x, y, z);
+                            bool currentCell = this.liveCells.Contains(currentPosition);
+                            int neighbors = this.CountLiveNeighbors(this.liveCells, x, y, z);
+                            if (neighbors == 3 || (neighbors == 2 && currentCell))
+                            {
+                                newCells.Add(currentPosition);
+                                newMinX = Math.Min(x, newMinX);
+                                newMinY = Math.Min(y, newMinY);
+                                newMinZ = Math.Min(z, newMinZ);
+                                newMaxX = Math.Max(x, newMaxX);
+                                newMaxY = Math.Max(y, newMaxY);
+                                newMaxZ = Math.Max(z, newMaxZ);
+                            }
+                        }
+                    }
+                }
+
+                this.liveCells = newCells;
+                this.minX = newMinX;
+                this.minY = newMinY;
+                this.minZ = newMinZ;
+                this.maxX = newMaxX;
+                this.maxY = newMaxY;
+                this.maxZ = newMaxZ;
+            }
+
+            private int CountLiveNeighbors(HashSet<Tuple<int, int, int>> liveCells, int x, int y, int z)
+            {
+                int result = 0;
+                for (int i = -1; i <= 1; i++)
+                {
+                    for (int j = -1; j <= 1; j++)
+                    {
+                        for (int k = -1; k <= 1; k++)
+                        {
+                            if (i != 0 || j != 0 || k != 0)
+                            {
+                                var neighbor = Tuple.Create(x + i, y + j, z + k);
+                                if (liveCells.Contains(neighbor))
+                                {
+                                    result++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return result;
+            }
+        }
+
+        class Board4D
+        {
+            HashSet<Tuple<int, int, int, int>> liveCells;
+            int minX, maxX, minY, maxY, minZ, maxZ, minW, maxW;
+
+            public int ActiveCells => this.liveCells.Count;
+
+            public Board4D(string[] initialState)
+            {
+                this.minZ = this.maxZ = this.minW = this.maxW = 0;
+                this.minX = this.minY = int.MaxValue;
+                this.maxX = this.maxY = int.MinValue;
+                this.liveCells = new HashSet<Tuple<int, int, int, int>>();
+                for (var y = 0; y < initialState.Length; y++)
+                {
+                    for (int x = 0; x < initialState[y].Length; x++)
+                    {
+                        if (initialState[y][x] == '#')
+                        {
+                            this.liveCells.Add(Tuple.Create(x, y, 0, 0));
+                            this.minX = Math.Min(this.minX, x);
+                            this.maxX = Math.Max(this.maxX, x);
+                            this.minY = Math.Min(this.minY, y);
+                            this.maxY = Math.Max(this.maxY, y);
+                        }
+                    }
+                }
+            }
+
+            public void Iterate()
+            {
+                var newCells = new HashSet<Tuple<int, int, int, int>>();
+                int newMinX = int.MaxValue;
+                int newMinY = int.MaxValue;
+                int newMinZ = int.MaxValue;
+                int newMinW = int.MaxValue;
+                int newMaxX = int.MinValue;
+                int newMaxY = int.MinValue;
+                int newMaxZ = int.MinValue;
+                int newMaxW = int.MinValue;
+                for (int w = this.minW - 1; w <= this.maxW + 1; w++)
+                {
+                    for (int z = this.minZ - 1; z <= this.maxZ + 1; z++)
+                    {
+                        for (int y = this.minY - 1; y <= this.maxY + 1; y++)
+                        {
+                            for (int x = this.minX - 1; x <= this.maxX + 1; x++)
+                            {
+                                var currentPosition = Tuple.Create(x, y, z, w);
+                                bool currentCell = this.liveCells.Contains(currentPosition);
+                                int neighbors = this.CountLiveNeighbors(this.liveCells, x, y, z, w);
+                                if (neighbors == 3 || (neighbors == 2 && currentCell))
+                                {
+                                    newCells.Add(currentPosition);
+                                    newMinX = Math.Min(x, newMinX);
+                                    newMinY = Math.Min(y, newMinY);
+                                    newMinZ = Math.Min(z, newMinZ);
+                                    newMinW = Math.Min(w, newMinW);
+                                    newMaxX = Math.Max(x, newMaxX);
+                                    newMaxY = Math.Max(y, newMaxY);
+                                    newMaxZ = Math.Max(z, newMaxZ);
+                                    newMaxW = Math.Max(w, newMaxW);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                this.liveCells = newCells;
+                this.minX = newMinX;
+                this.minY = newMinY;
+                this.minZ = newMinZ;
+                this.minW = newMinW;
+                this.maxX = newMaxX;
+                this.maxY = newMaxY;
+                this.maxZ = newMaxZ;
+                this.maxW = newMaxW;
+            }
+
+            private int CountLiveNeighbors(HashSet<Tuple<int, int, int, int>> liveCells, int x, int y, int z, int w)
+            {
+                int result = 0;
+                for (int i = -1; i <= 1; i++)
+                {
+                    for (int j = -1; j <= 1; j++)
+                    {
+                        for (int k = -1; k <= 1; k++)
+                        {
+                            for (int l = -1; l <= 1; l++)
+                            {
+                                if (i != 0 || j != 0 || k != 0 || l != 0)
+                                {
+                                    var neighbor = Tuple.Create(x + i, y + j, z + k, w + l);
+                                    if (liveCells.Contains(neighbor))
+                                    {
+                                        result++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return result;
             }
         }
     }
