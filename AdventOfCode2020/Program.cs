@@ -11,16 +11,7 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            //Day1.Solve();
-            //Day2.Solve();
-            //Day3.Solve();
-            //Day4.Solve();
-            //Day5.Solve();
-            //Day6.Solve();
-            //Day7.Solve();
-            //Day8.Solve();
-            //Day15.Solve();
-            Day17.Solve();
+            Day9.Solve();
         }
     }
 
@@ -881,6 +872,93 @@ namespace AdventOfCode2020
         }
     }
 
+    class Day9
+    {
+        public static void Solve()
+        {
+            var testInput = new[]
+            {
+                "35", "20", "15", "25", "47",
+                "40", "62", "55", "65", "95",
+                "102", "117", "150", "182", "127",
+                "219", "299", "277", "309", "576"
+            };
+            var useTestInput = false;
+            var input =
+                (useTestInput ? testInput : Helpers.LoadInput("input9.txt"))
+                .Select(l => long.Parse(l))
+                .ToArray();
+            var patternSize = useTestInput ? 5 : 25;
+            int part1Index = -1;
+            long part1 = 0;
+            for (int i = patternSize; i < input.Length; i++)
+            {
+                if (!HasValue(input, i - patternSize, i - 1, input[i]))
+                {
+                    part1Index = i; 
+                    part1 = input[i];
+                    break;
+                }
+            }
+
+            Console.WriteLine($"Part 1: {part1}");
+
+            long part2 = -1;
+            // 11828200 is too low
+
+            // For part 2, the input size is small enough that we can use a naive n^2 approach
+            for (int start = 0; start < part1Index; start++)
+            {
+                long sum = 0;
+                long smaller = long.MaxValue;
+                long larger = long.MinValue;
+                for (int end = start; end < part1Index; end++)
+                {
+                    sum += input[end];
+                    if (input[end] < smaller) smaller = input[end];
+                    if (input[end] > larger) larger = input[end];
+                    if (sum > part1)
+                    {
+                        // Not this number
+                        break;
+                    }
+
+                    if (sum == part1)
+                    {
+                        part2 = smaller + larger;
+                        break;
+                    }
+                }
+
+                if (part2 > 0) break;
+            }
+
+            Console.WriteLine($"Part 2: {part2}");
+        }
+
+        private static bool HasValue(long[] array, int lowIndex, int highIndex, long value)
+        {
+            long[] searched = new long[highIndex - lowIndex + 1];
+            Array.Copy(array, lowIndex, searched, 0, searched.Length);
+            Array.Sort(searched);
+            int low = 0, high = searched.Length - 1;
+            while (low < high)
+            {
+                long candidate = searched[low] + searched[high];
+                if (candidate == value) return true;
+                if (candidate < value)
+                {
+                    low++;
+                }
+                else
+                {
+                    high--;
+                }
+            }
+
+            return false;
+        }
+    }
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
