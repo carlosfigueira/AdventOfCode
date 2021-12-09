@@ -12,7 +12,7 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            Day8.Solve();
+            Day9.Solve();
         }
 
         static void Day1Part1()
@@ -693,6 +693,112 @@ namespace AdventOfCode2021
                         10 * GetDecoding(this.Outputs[2]) +
                         1 * GetDecoding(this.Outputs[3]);
                 }
+            }
+        }
+
+        class Day9
+        {
+            public static void Solve()
+            {
+                var testInput = new[]
+                {
+                    "2199943210",
+                    "3987894921",
+                    "9856789892",
+                    "8767896789",
+                    "9899965678"
+                };
+                var input =
+                    //testInput
+                    Helpers.LoadInput("input9.txt")
+                    ;
+
+                var lowPoints = new List<Tuple<int, int>>();
+                int rows = input.Length;
+                int cols = input[0].Length;
+                int totalPoints = rows * cols;
+                int numberOfNines = 0; // used to validate algorithm
+                for (int i = 0; i < rows; i++)
+                {
+                    for (int j = 0; j < cols; j++)
+                    {
+                        if (input[i][j] == '9') numberOfNines++;
+                        var isLow = true;
+                        if (j > 0 && input[i][j] >= input[i][j - 1])
+                        {
+                            isLow = false;
+                            continue;
+                        }
+                        if (j < cols - 1 && input[i][j] >= input[i][j + 1])
+                        {
+                            isLow = false;
+                            continue;
+                        }
+                        if (i > 0 && input[i][j] >= input[i - 1][j])
+                        {
+                            isLow = false;
+                            continue;
+                        }
+                        if (i < rows - 1 && input[i][j] >= input[i + 1][j])
+                        {
+                            isLow = false;
+                            continue;
+                        }
+
+                        if (isLow)
+                        {
+                            //Console.WriteLine($"Low point: {i},{j}: {input[i][j]}");
+                            lowPoints.Add(Tuple.Create(i, j));
+                        }
+                    }
+                }
+
+                Console.WriteLine($"Part 1: {lowPoints.Sum(p => input[p.Item1][p.Item2] - '0' + 1)}");
+
+                var allBasinSizes = new List<int>();
+                foreach (var lowPoint in lowPoints)
+                {
+                    var basinSize = 0;
+                    var queue = new Queue<Tuple<int, int>>();
+                    queue.Enqueue(lowPoint);
+                    var basinPoints = new List<Tuple<int, int>>();
+                    bool[,] visited = new bool[rows, cols];
+                    visited[lowPoint.Item1, lowPoint.Item2] = true;
+                    while (queue.Count > 0)
+                    {
+                        var next = queue.Dequeue();
+                        basinPoints.Add(next);
+                        basinSize++;
+                        int i = next.Item1, j = next.Item2;
+                        if (i > 0 && input[i][j] < input[i - 1][j] && input[i - 1][j] != '9' && !visited[i - 1, j])
+                        {
+                            visited[i - 1, j] = true;
+                            queue.Enqueue(Tuple.Create(i - 1, j));
+                        }
+                        if (i < rows - 1 && input[i][j] < input[i + 1][j] && input[i + 1][j] != '9' && !visited[i + 1, j])
+                        {
+                            visited[i + 1, j] = true;
+                            queue.Enqueue(Tuple.Create(i + 1, j));
+                        }
+                        if (j > 0 && input[i][j] < input[i][j - 1] && input[i][j - 1] != '9' && !visited[i, j - 1])
+                        {
+                            visited[i, j - 1] = true;
+                            queue.Enqueue(Tuple.Create(i, j - 1));
+                        }
+                        if (j < cols - 1 && input[i][j] < input[i][j + 1] && input[i][j + 1] != '9' && !visited[i, j + 1])
+                        {
+                            visited[i, j + 1] = true;
+                            queue.Enqueue(Tuple.Create(i, j + 1));
+                        }
+                    }
+
+                    //Console.WriteLine($"Basin points ({basinPoints.Count}, {basinSize}): " + String.Join(" - ", basinPoints.Select(p => $"{p.Item1},{p.Item2}")));
+                    allBasinSizes.Add(basinSize);
+                }
+
+                var top3 = allBasinSizes.OrderByDescending(s => s).Take(3).ToArray();
+                var part2 = top3[0] * top3[1] * top3[2];
+                Console.WriteLine($"Part 2: {part2}. Validation: {numberOfNines} + {allBasinSizes.Sum()} = {numberOfNines + allBasinSizes.Sum()}, should be {totalPoints}");
             }
         }
     }
