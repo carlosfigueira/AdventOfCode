@@ -11,7 +11,7 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            Day9.Solve();
+            Day16.Solve();
         }
     }
 
@@ -959,6 +959,187 @@ namespace AdventOfCode2020
             return false;
         }
     }
+
+    class Day16
+    {
+        public static void Solve()
+        {
+            var testInput1 = new[]
+            {
+                "class: 1-3 or 5-7",
+                "row: 6-11 or 33-44",
+                "seat: 13-40 or 45-50",
+                "",
+                "your ticket:",
+                "7,1,14",
+                "",
+                "nearby tickets:",
+                "7,3,47",
+                "40,4,50",
+                "55,2,20",
+                "38,6,12"
+            };
+            var useTestInput = false;
+            var input = useTestInput ? testInput1 : Helpers.LoadInput("input16.txt");
+            ParseInput(input, out List<Rule> rules, out int[] myTicket, out List<int[]> otherTickets);
+
+            int part1 = 0;
+            List<int> invalidTicketIndices = new List<int>();
+            for (var i = 0; i < otherTickets.Count; i++)
+            {
+                var other = otherTickets[i];
+                var isValid = true;
+                foreach (var field in other)
+                {
+                    if (!rules.Any(r => r.IsValid(field)))
+                    {
+                        part1 += field;
+                        isValid = false;
+                    }
+                }
+
+                if (!isValid)
+                {
+                    invalidTicketIndices.Add(i);
+                }
+            }
+
+            Console.WriteLine($"Part 1: {part1}");
+
+            for (var i = invalidTicketIndices.Count - 1; i >= 0; i--)
+            {
+                otherTickets.RemoveAt(invalidTicketIndices[i]);
+            }
+
+
+            if (useTestInput)
+            {
+                var testInput2 = new[]
+                {
+                    "class: 0-1 or 4-19",
+                    "row: 0-5 or 8-19",
+                    "seat: 0-13 or 16-19",
+                    "",
+                    "your ticket:",
+                    "11,12,13",
+                    "",
+                    "nearby tickets:",
+                    "3,9,18",
+                    "15,1,5",
+                    "5,14,9"
+                };
+                ParseInput(testInput2, out rules, out myTicket, out otherTickets);
+            }
+
+            List<int>[] ruleToPositionMapping = new List<int>[rules.Count];
+            for (var i = 0; i < rules.Count; i++)
+            {
+                ruleToPositionMapping[i] = new List<int>();
+                for (int candidateField = 0; candidateField < rules.Count; candidateField++)
+                {
+                    bool allValid = true;
+                    foreach (var ticket in otherTickets)
+                    {
+                        if (!rules[i].IsValid(ticket[candidateField]))
+                        {
+                            allValid = false;
+                            break;
+                        }
+                    }
+
+                    if (allValid)
+                    {
+                        ruleToPositionMapping[i].Add(candidateField);
+                    }
+                }
+            }
+
+            //for (int i = 0; i < rules.Count; i++)
+            //{
+            //    Console.WriteLine($"There are {ruleToPositionMapping[i].Count} possibilities for rule {i}");
+            //}
+
+            List<Tuple<int, List<int>>> allRuleMappings =
+                ruleToPositionMapping.Select((mappings, index) => Tuple.Create(index, mappings))
+                .OrderBy(m => m.Item2.Count)
+                .ToList();
+
+            Dictionary<int, int> ruleMappings = new Dictionary<int, int>();
+            List<int> alreadyUsed = new List<int>();
+            var myFields = new Dictionary<string, int>();
+            for (int i = 0; i < allRuleMappings.Count; i++)
+            {
+                var ruleIndex = allRuleMappings[i].Item1;
+                var possibleMappings = allRuleMappings[i].Item2.Except(alreadyUsed).ToArray();
+                var target = possibleMappings[0];
+                ruleMappings.Add(ruleIndex, target);
+                var rule = rules[ruleIndex];
+                myFields.Add(rule.Name, myTicket[target]);
+                // Console.WriteLine($"Rule {rule.Name} ({rule.Ranges}) maps to {target}: {myTicket[target]}");
+                alreadyUsed.Add(target);
+            }
+
+            long part2 = 1;
+            int departureCount = 0;
+            foreach (var rule in myFields.Keys)
+            {
+                if (rule.StartsWith("departure"))
+                {
+                    departureCount++;
+                    part2 *= myFields[rule];
+                }
+            }
+
+            Console.WriteLine($"Part 2: product={part2}, for {departureCount} rules");
+        }
+
+        private static void ParseInput(string[] input, out List<Rule> rules, out int[] myTicket, out List<int[]> otherTickets)
+        {
+            rules = new List<Rule>();
+            int i = 0;
+            while (!string.IsNullOrWhiteSpace(input[i]))
+            {
+                rules.Add(new Rule(input[i]));
+                i++;
+            }
+
+            i += 2;
+            myTicket = input[i].Split(',').Select(p => int.Parse(p)).ToArray();
+
+            i += 3;
+            otherTickets = new List<int[]>();
+            while (i < input.Length)
+            {
+                otherTickets.Add(input[i].Split(',').Select(p => int.Parse(p)).ToArray());
+                i++;
+            }
+        }
+
+        class Rule
+        {
+            private int min1, min2, max1, max2;
+            public string Name { get; private set; }
+            public string Ranges => $"{min1}-{max1} or {min2}-{max2}";
+
+            private static Regex ruleRegex = new Regex(@"(?<name>[^\:]+)\: (?<min1>\d+)\-(?<max1>\d+) or (?<min2>\d+)\-(?<max2>\d+)");
+            public Rule(string ruleSpec)
+            {
+                var match = ruleRegex.Match(ruleSpec);
+                if (!match.Success) throw new Exception();
+                this.Name = match.Groups["name"].Value;
+                this.min1 = int.Parse(match.Groups["min1"].Value);
+                this.max1 = int.Parse(match.Groups["max1"].Value);
+                this.min2 = int.Parse(match.Groups["min2"].Value);
+                this.max2 = int.Parse(match.Groups["max2"].Value);
+            }
+
+            public bool IsValid(int number)
+            {
+                return (min1 <= number && number <= max1) || (min2 <= number && number <= max2);
+            }
+        }
+    }
+
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
