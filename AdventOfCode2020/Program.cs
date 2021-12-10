@@ -11,7 +11,7 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            Day10.Solve();
+            Day18.Solve();
         }
     }
 
@@ -1215,6 +1215,189 @@ namespace AdventOfCode2020
             }
 
             Console.WriteLine($"Part 2: {result}");
+        }
+    }
+
+    class Day18
+    {
+        public static void Solve()
+        {
+            var testInput = new string[]
+            {
+                "1 + 2 * 3 + 4 * 5 + 6",
+                "2 * 3 + (4 * 5)",
+                "5 + (8 * 3 + 9 + 3 * 4 * 3)",
+                "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))",
+                "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"
+            };
+            var useTestInput = false;
+            var input = useTestInput ? testInput : Helpers.LoadInput("input18.txt");
+
+            long part1 = 0;
+            IEvaluator evaluator = new EvaluatorWithoutPrecedence();
+            foreach (var expr in input)
+            {
+                var result = evaluator.Evaluate(expr);
+                Console.WriteLine($"{expr} = {result}");
+                part1 += result;
+            }
+
+            Console.WriteLine($"Part 1: {part1}");
+
+            long part2 = 0;
+            evaluator = new EvaluatorWithPrecedence();
+            foreach (var expr in input)
+            {
+                var result = evaluator.Evaluate(expr);
+                Console.WriteLine($"{expr} = {result}");
+                part2 += result;
+            }
+
+            Console.WriteLine($"Part 2: {part2}");
+
+        }
+
+        interface IEvaluator
+        {
+            long Evaluate(string expression);
+        }
+
+        abstract class EvaluatorBase: IEvaluator
+        {
+            protected char? ReadOperatorOrCloseParenOrEof(string expr, ref int index)
+            {
+                this.SkipSpaces(expr, ref index);
+                if (index >= expr.Length) return null;
+                // Should be a '+' or a '*'
+                switch (expr[index])
+                {
+                    case '+':
+                    case '*':
+                        return expr[index++];
+                    case ')':
+                        return expr[index]; // Do not consume it
+                    default:
+                        throw new Exception($"Expr[{index}] = '{expr[index]}', expected '+' or '*'");
+                }
+            }
+            protected void SkipSpaces(string expr, ref int index)
+            {
+                while (index < expr.Length && char.IsWhiteSpace(expr[index])) index++;
+            }
+
+            public abstract long Evaluate(string expression);
+        }
+
+        class EvaluatorWithoutPrecedence : EvaluatorBase
+        {
+            public override long Evaluate(string expr)
+            {
+                int index = 0;
+                return this.Evaluate(expr, ref index);
+            }
+
+            private long Evaluate(string expr, ref int index)
+            {
+                long result = this.ReadValue(expr, ref index);
+                this.SkipSpaces(expr, ref index);
+                while (index < expr.Length)
+                {
+                    char? op = this.ReadOperatorOrCloseParenOrEof(expr, ref index);
+                    if (op == null || op == ')') break;
+                    long operand = ReadValue(expr, ref index);
+                    if (op == '+')
+                    {
+                        result += operand;
+                    }
+                    else
+                    {
+                        result *= operand;
+                    }
+                }
+
+                return result;
+            }
+
+            private long ReadValue(string expr, ref int index)
+            {
+                SkipSpaces(expr, ref index);
+                if (char.IsDigit(expr[index]))
+                {
+                    return expr[index++] - '0';
+                }
+
+                // Should be a '('
+                if (expr[index] != '(') throw new Exception($"Expr[{index}] = '{expr[index]}', expected '('");
+                index++;
+                var result = Evaluate(expr, ref index);
+                SkipSpaces(expr, ref index);
+                // Should be a ')'
+                if (expr[index] != ')') throw new Exception($"Expr[{index}] = '{expr[index]}', expected ')'");
+                index++;
+                return result;
+            }
+        }
+
+        class EvaluatorWithPrecedence : EvaluatorBase
+        {
+            public override long Evaluate(string expr)
+            {
+                int index = 0;
+                return this.Evaluate(expr, ref index);
+            }
+
+            private long Evaluate(string expr, ref int index)
+            {
+                return this.ReadMultiplication(expr, ref index);
+            }
+
+            private long ReadMultiplication(string expr, ref int index)
+            {
+                long result = this.ReadAddition(expr, ref index);
+                while (index < expr.Length)
+                {
+                    char? op = this.ReadOperatorOrCloseParenOrEof(expr, ref index);
+                    if (op != '*') break;
+                    long operand = ReadAddition(expr, ref index);
+                    result *= operand;
+                }
+
+                return result;
+            }
+
+            private long ReadAddition(string expr, ref int index)
+            {
+                long result = this.ReadValue(expr, ref index);
+                while (index < expr.Length)
+                {
+                    char? op = this.ReadOperatorOrCloseParenOrEof(expr, ref index);
+                    if (op == '*') index--; // so they can be consumed by the caller
+                    if (op != '+') break;
+                    long operand = ReadValue(expr, ref index);
+                    result += operand;
+                }
+
+                return result;
+            }
+
+            private long ReadValue(string expr, ref int index)
+            {
+                SkipSpaces(expr, ref index);
+                if (char.IsDigit(expr[index]))
+                {
+                    return expr[index++] - '0';
+                }
+
+                // Should be a '('
+                if (expr[index] != '(') throw new Exception($"Expr[{index}] = '{expr[index]}', expected '('");
+                index++;
+                var result = this.Evaluate(expr, ref index);
+                this.SkipSpaces(expr, ref index);
+                // Should be a ')'
+                if (expr[index] != ')') throw new Exception($"Expr[{index}] = '{expr[index]}', expected ')'");
+                index++;
+                return result;
+            }
         }
     }
     public class Helpers
