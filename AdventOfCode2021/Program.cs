@@ -12,7 +12,7 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            Day9.Solve();
+            Day10.Solve();
         }
 
         static void Day1Part1()
@@ -799,6 +799,112 @@ namespace AdventOfCode2021
                 var top3 = allBasinSizes.OrderByDescending(s => s).Take(3).ToArray();
                 var part2 = top3[0] * top3[1] * top3[2];
                 Console.WriteLine($"Part 2: {part2}. Validation: {numberOfNines} + {allBasinSizes.Sum()} = {numberOfNines + allBasinSizes.Sum()}, should be {totalPoints}");
+            }
+        }
+
+        class Day10
+        {
+            public static void Solve()
+            {
+                var testInput = new[]
+                {
+                    "[({(<(())[]>[[{[]{<()<>>",
+                    "[(()[<>])]({[<{<<[]>>(",
+                    "{([(<{}[<>[]}>{[]{[(<()>",
+                    "(((({<>}<{<{<>}{[]{[]{}",
+                    "[[<[([]))<([[{}[[()]]]",
+                    "[{[{({}]{}}([{[{{{}}([]",
+                    "{<[[]]>}<{[{[{[]{()[[[]",
+                    "[<(<(<(<{}))><([]([]()",
+                    "<{([([[(<>()){}]>(<<{{",
+                    "<{([{{}}[<[[[<>{}]]]>[]]"
+                };
+                var useTestInput = false;
+                var input = useTestInput ? testInput : Helpers.LoadInput("input10.txt");
+                var invalidCharValues = new Dictionary<char, int>
+                {
+                    {')',3 }, {']', 57 },{ '}', 1197 }, {'>', 25137}
+                };
+
+                var part1 = input.Sum(line =>
+                {
+                    var c = FirstInvalidChar(line);
+                    return c.HasValue ? invalidCharValues[c.Value] : 0;
+                });
+                Console.WriteLine($"Part 1: {part1}");
+
+                var validInputs = input.Where(l => FirstInvalidChar(l) == null).ToArray();
+                var validCharValues = new Dictionary<char, int>
+                {
+                    {')', 1 }, {']', 2 },{ '}', 3 }, {'>', 4 }
+                };
+                var validScores = new long[validInputs.Length];
+                for (var i = 0; i < validInputs.Length; i++)
+                {
+                    var score = 0L;
+                    var completionChars = GetCompletionChars(validInputs[i]);
+                    foreach (var c in completionChars)
+                    {
+                        score *= 5;
+                        score += validCharValues[c];
+                    }
+
+                    validScores[i] = score;
+                }
+
+                Array.Sort(validScores);
+                var part2 = validScores[validScores.Length / 2];
+                Console.WriteLine($"Part 2: {part2}");
+            }
+
+            static string GetCompletionChars(string line)
+            {
+                Stack<char> stack = new Stack<char>();
+                string openChars = "[({<";
+                string closeChars = "])}>";
+                foreach (var c in line)
+                {
+                    if (openChars.Contains(c))
+                    {
+                        var correspondingCloseChar = closeChars[openChars.IndexOf(c)];
+                        stack.Push(correspondingCloseChar);
+                    }
+                    else
+                    {
+                        stack.Pop();
+                    }
+                }
+
+                var sb = new StringBuilder();
+                while (stack.Count > 0)
+                {
+                    sb.Append(stack.Pop());
+                }
+
+                return sb.ToString();
+            }
+
+            static char? FirstInvalidChar(string line)
+            {
+                Stack<char> stack = new Stack<char>();
+                string openChars = "[({<";
+                string closeChars = "])}>";
+                foreach (var c in line)
+                {
+                    if (openChars.Contains(c))
+                    {
+                        stack.Push(c);
+                    }
+                    else
+                    {
+                        if (stack.Count == 0) return c;
+                        var expectedOpenChar = openChars[closeChars.IndexOf(c)];
+                        var correspondingOpenChar = stack.Pop();
+                        if (correspondingOpenChar != expectedOpenChar) return c;
+                    }
+                }
+
+                return null;
             }
         }
     }
