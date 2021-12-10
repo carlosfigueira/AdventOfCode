@@ -11,7 +11,7 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            Day16.Solve();
+            Day10.Solve();
         }
     }
 
@@ -1140,6 +1140,83 @@ namespace AdventOfCode2020
         }
     }
 
+    class Day10
+    {
+        public static void Solve()
+        {
+            var testInput1 = new[] { "16", "10", "15", "5", "1", "11", "7", "19", "6", "12", "4" };
+            var testInput2 = new[] { 
+                "28", "33", "18", "42", "31", "14", "46",
+                "20", "48", "47", "24", "23", "49", "45",
+                "19", "38", "39", "11", "1", "32", "25",
+                "35", "8", "17", "7", "9", "4", "2", "34",
+                "10", "3"
+            };
+            var input =
+                //testInput1
+                //testInput2
+                Helpers.LoadInput("input10.txt")
+                .Select(l => int.Parse(l))
+                .ToArray();
+
+            var sorted = input.OrderBy(v => v).ToArray();
+            int ones = 0, twos = 0, threes = 0;
+            int last = 0;
+            for (int i = 0; i < sorted.Length; i++)
+            {
+                switch(sorted[i] - last)
+                {
+                    case 1: ones++; break;
+                    case 2: twos++; break;
+                    case 3: threes++; break;
+                }
+
+                last = sorted[i];
+            }
+            threes++; // last jolt
+            Console.WriteLine($"Part 1: {ones} * {threes} = {ones * threes}");
+
+            List<int> seriesOfOne = new List<int>();
+            int currentSeries = 1;
+            if (sorted[0] == 1) currentSeries++;
+            for (int i = 1; i < sorted.Length; i++)
+            {
+                if (sorted[i] - sorted[i - 1] == 1)
+                {
+                    currentSeries++;
+                }
+                else
+                {
+                    if (currentSeries > 1)
+                    {
+                        seriesOfOne.Add(currentSeries);
+                    }
+
+                    currentSeries = 1;
+                }
+            }
+
+            if (currentSeries > 1) seriesOfOne.Add(currentSeries);
+            int maxSeries = seriesOfOne.Max();
+
+            int[] possibilities = new int[maxSeries + 1];
+            possibilities[0] = 0;
+            possibilities[1] = 1;
+            possibilities[2] = 1;
+            for (int i = 3; i < possibilities.Length; i++)
+            {
+                possibilities[i] = possibilities[i - 1] + possibilities[i - 2] + possibilities[i - 3];
+            }
+
+            long result = 1;
+            foreach (var series in seriesOfOne)
+            {
+                result *= possibilities[series];
+            }
+
+            Console.WriteLine($"Part 2: {result}");
+        }
+    }
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
