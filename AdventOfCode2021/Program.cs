@@ -907,6 +907,131 @@ namespace AdventOfCode2021
                 return null;
             }
         }
+
+        class Day11
+        {
+            public static void Solve()
+            {
+                var testInput1 = new[] { "11111", "19991", "19191", "19991", "11111" };
+                var testInput2 = new[]
+                {
+                    "5483143223",
+                    "2745854711",
+                    "5264556173",
+                    "6141336146",
+                    "6357385478",
+                    "4167524645",
+                    "2176841721",
+                    "6882881134",
+                    "4846848554",
+                    "5283751526"
+                };
+                var inputToUse = 3;
+                var input = inputToUse == 1 ? testInput1 : (inputToUse == 2 ? testInput2 : Helpers.LoadInput("input11.txt"));
+                Board board = new Board(input);
+                for (int i = 0; i < 100; i++) {
+                    //Console.WriteLine($"Iteration {i} (current flash count = {board.FlashCount})");
+                    //board.Print();
+                    board.Iterate();
+                }
+                Console.WriteLine($"Part 1: {board.FlashCount}");
+
+                int prevCount = board.FlashCount;
+                int currentStep = 100;
+                while (true)
+                {
+                    board.Iterate();
+                    currentStep++;
+                    if (board.FlashCount == prevCount + 100)
+                    {
+                        Console.WriteLine($"Part 2: {currentStep}");
+                        break;
+                    }
+
+                    prevCount = board.FlashCount;
+                }
+            }
+
+            class Board
+            {
+                private int rows;
+                private int cols;
+                private int[,] energyLevels;
+                public int FlashCount { get; private set; }
+                public Board(string[] initialState)
+                {
+                    this.rows = initialState.Length;
+                    this.cols = initialState[0].Length;
+                    this.energyLevels = new int[rows, cols];
+                    for (int i = 0; i < this.rows; i++)
+                    {
+                        for (int j = 0; j < this.cols; j++)
+                        {
+                            this.energyLevels[i, j] = initialState[i][j] - '0';
+                        }
+                    }
+                }
+                public void Print()
+                {
+                    for (int i = 0; i < this.rows; i++)
+                    {
+                        for (int j= 0; j < this.cols; j++)
+                        {
+                            Console.Write(this.energyLevels[i, j]);
+                        }
+
+                        Console.WriteLine();
+                    }
+                }
+                public void Iterate()
+                {
+                    Queue<Tuple<int, int>> toIncrease = new Queue<Tuple<int, int>>();
+                    for (int i = 0; i < this.rows; i++)
+                    {
+                        for (int j = 0; j < this.cols; j++)
+                        {
+                            this.energyLevels[i, j]++;
+                            if (this.energyLevels[i, j] == 10)
+                            {
+                                this.FlashCount++;
+                                toIncrease.Enqueue(Tuple.Create(i, j));
+                            }
+                        }
+                    }
+
+                    while (toIncrease.Count > 0)
+                    {
+                        var next = toIncrease.Dequeue();
+                        int row = next.Item1, col = next.Item2;
+                        for (int i = Math.Max(0, row - 1); i <= Math.Min(row + 1, this.rows - 1); i++)
+                        {
+                            if (i < 0 || i >= this.rows) continue;
+                            for (int j = Math.Max(0, col - 1); j <= Math.Min(col + 1, this.cols - 1); j++)
+                            {
+                                if (i == row && j == col) continue;
+                                this.energyLevels[i, j]++;
+                                if (this.energyLevels[i, j] == 10)
+                                {
+                                    this.FlashCount++;
+                                    toIncrease.Enqueue(Tuple.Create(i, j));
+                                }
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i < this.rows; i++)
+                    {
+                        for (int j = 0; j < this.cols; j++)
+                        {
+                            if (this.energyLevels[i, j] > 9)
+                            {
+                                this.energyLevels[i, j] = 0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public class Helpers
