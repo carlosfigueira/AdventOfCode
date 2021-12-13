@@ -1205,6 +1205,152 @@ namespace AdventOfCode2021
                 return result;
             }
         }
+
+        class Day13
+        {
+            public static void Solve()
+            {
+                var testInput = new[]
+                {
+                    "6,10",
+                    "0,14",
+                    "9,10",
+                    "0,3",
+                    "10,4",
+                    "4,11",
+                    "6,0",
+                    "6,12",
+                    "4,1",
+                    "0,13",
+                    "10,12",
+                    "3,4",
+                    "3,0",
+                    "8,4",
+                    "1,10",
+                    "2,14",
+                    "8,10",
+                    "9,0",
+                    "",
+                    "fold along y=7",
+                    "fold along x=5"
+                };
+                var useTestInput = false;
+                var input = useTestInput ? testInput : Helpers.LoadInput("input13.txt");
+                ParseInput(input, out var points, out var folds);
+
+                var board = points;
+                int foldCount = 0;
+                foreach (var fold in folds)
+                {
+                    var toRemove = new List<int>();
+                    for (var i = 0; i < board.Count; i++)
+                    {
+                        int x = board[i].X;
+                        int y = board[i].Y;
+                        int foldAt = fold.Item2;
+                        if (fold.Item1 == 'y')
+                        {
+                            if (y > foldAt)
+                            {
+                                var newPoint = new Coord(x, 2 * foldAt - y);
+                                if (board.Contains(newPoint))
+                                {
+                                    toRemove.Add(i);
+                                }
+                                else
+                                {
+                                    board[i] = newPoint;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (x > foldAt)
+                            {
+                                var newPoint = new Coord(2 * foldAt - x, y);
+                                if (board.Contains(newPoint))
+                                {
+                                    toRemove.Add(i);
+                                }
+                                else
+                                {
+                                    board[i] = newPoint;
+                                }
+                            }
+                        }
+                    }
+
+                    for (var i = toRemove.Count - 1; i >= 0; i--)
+                    {
+                        board.RemoveAt(toRemove[i]);
+                    }
+
+                    foldCount++;
+                    Console.WriteLine($"After {foldCount} folds, {board.Count} dots are visible");
+                }
+
+                int maxX = board.Max(c => c.X);
+                int maxY = board.Max(c => c.Y);
+                for (int y = 0; y <= maxY; y++)
+                {
+                    for (int x = 0; x <= maxX; x++)
+                    {
+                        if (board.Contains(new Coord(x, y)))
+                        {
+                            Console.Write("#");
+                        }
+                        else
+                        {
+                            Console.Write(".");
+                        }
+                    }
+
+                    Console.WriteLine();
+                }
+            }
+
+            [DebuggerDisplay("Coord({X},{Y})")]
+            class Coord
+            {
+                public int X { get; private set; }
+                public int Y { get; private set; }
+                public Coord(int x, int y)
+                {
+                    this.X = x;
+                    this.Y = y;
+                }
+                public override bool Equals(object obj)
+                {
+                    return obj is Coord && this.X == ((Coord)obj).X && this.Y == ((Coord)obj).Y;
+                }
+                public override int GetHashCode()
+                {
+                    return (this.X * 10000 + this.Y).GetHashCode();
+                }
+            }
+
+            static void ParseInput(string[] input, out List<Coord> points, out List<Tuple<char, int>> folds)
+            {
+                int i = 0;
+                points = new List<Coord>();
+                folds = new List<Tuple<char, int>>();
+                while (!string.IsNullOrEmpty(input[i]))
+                {
+                    var parts = input[i].Split(',');
+                    points.Add(new Coord(int.Parse(parts[0]), int.Parse(parts[1])));
+                    i++;
+                }
+
+                i++;
+                while (i < input.Length)
+                {
+                    var fold = input[i].Substring("fold along ".Length);
+                    var parts = fold.Split('=');
+                    folds.Add(Tuple.Create(parts[0][0], int.Parse(parts[1])));
+                    i++;
+                }
+            }
+        }
     }
 
     public class Helpers
