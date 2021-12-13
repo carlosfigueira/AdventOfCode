@@ -1032,6 +1032,179 @@ namespace AdventOfCode2021
                 }
             }
         }
+
+        class Day12
+        {
+            public static void Solve()
+            {
+                var testInput1 = new[]
+                {
+                    "start-A",
+                    "start-b",
+                    "A-c",
+                    "A-b",
+                    "b-d",
+                    "A-end",
+                    "b-end"
+                };
+
+                var testInput2 = new[]
+                {
+                    "dc-end",
+                    "HN-start",
+                    "start-kj",
+                    "dc-start",
+                    "dc-HN",
+                    "LN-dc",
+                    "HN-end",
+                    "kj-sa",
+                    "kj-HN",
+                    "kj-dc"
+                };
+
+                var testInput3 = new[]
+                {
+                    "fs-end",
+                    "he-DX",
+                    "fs-he",
+                    "start-DX",
+                    "pj-DX",
+                    "end-zg",
+                    "zg-sl",
+                    "zg-pj",
+                    "pj-he",
+                    "RW-he",
+                    "fs-DX",
+                    "pj-RW",
+                    "zg-RW",
+                    "start-pj",
+                    "he-WI",
+                    "zg-he",
+                    "pj-fs",
+                    "start-RW"
+                };
+
+                var inputToUse = 4;
+                string[] input = null;
+                switch (inputToUse)
+                {
+                    case 1: input = testInput1; break;
+                    case 2: input = testInput2; break;
+                    case 3: input = testInput3; break;
+                    default: input = Helpers.LoadInput("input12.txt"); break;
+                }
+
+                var paths = new Dictionary<string, List<string>>();
+                foreach (var line in input)
+                {
+                    var parts = line.Split('-');
+                    var end1 = parts[0];
+                    var end2 = parts[1];
+                    if (!paths.ContainsKey(end1)) paths.Add(end1, new List<string>());
+                    if (!paths.ContainsKey(end2)) paths.Add(end2, new List<string>());
+                    paths[end1].Add(end2);
+                    paths[end2].Add(end1);
+                }
+
+                int part1 = 0;
+                foreach (var startPath in paths["start"])
+                {
+                    HashSet<string> visited = new HashSet<string>();
+                    visited.Add("start");
+                    part1 += CountPathsToEnd(startPath, paths, visited);
+                }
+
+                Console.WriteLine($"Part 1: {part1}");
+
+                int part2 = 0;
+                var lowerCaseCaves = paths.Keys.Where(c => c != "start" && c != "end" && char.IsLower(c[0])).ToArray();
+
+                foreach (var startPath in paths["start"])
+                {
+                    HashSet<string> visited = new HashSet<string>();
+                    visited.Add("start");
+                    part2 += CountPathsToEnd2(startPath, paths, false, $"start-{startPath}-");
+                }
+
+                Console.WriteLine($"Part 2: {part2}");
+            }
+
+            static int CountPathsToEnd2(string cave, Dictionary<string, List<string>> paths, bool visitedLowerTwice, string path)
+            {
+                int result = 0;
+                foreach (var nextCave in paths[cave])
+                {
+                    if (nextCave == "end")
+                    {
+                        //Console.WriteLine($"Path: {path}end");
+                        result++;
+                        continue;
+                    }
+                
+                    if (nextCave == "start")
+                    {
+                        continue;
+                    }
+
+                    bool canVisit;
+                    bool secondLowerVisit = false;
+                    if (char.IsUpper(nextCave[0]))
+                    {
+                        canVisit = true;
+                    }
+                    else
+                    {
+                        bool alreadyVisited = path.Contains("-" + nextCave + "-");
+                        if (!alreadyVisited)
+                        {
+                            canVisit = true;
+                        }
+                        else
+                        {
+                            canVisit = !visitedLowerTwice;
+                            secondLowerVisit = true;
+                        }
+                    }
+
+                    if (canVisit)
+                    {
+                        result += CountPathsToEnd2(nextCave, paths, secondLowerVisit || visitedLowerTwice, path + nextCave + "-");
+                    }
+                }
+
+                return result;
+            }
+
+            static int CountPathsToEnd(string cave, Dictionary<string, List<string>> paths, HashSet<string> visited)
+            {
+                int result = 0;
+                foreach (var nextCave in paths[cave])
+                {
+                    if (nextCave == "end")
+                    {
+                        result++;
+                        continue;
+                    }
+
+                    if (!visited.Contains(nextCave))
+                    {
+                        if (!char.IsUpper(cave[0]))
+                        {
+                            visited.Add(cave);
+                        }
+
+                        result += CountPathsToEnd(nextCave, paths, visited);
+
+                        if (!char.IsUpper(cave[0]))
+                        {
+                            visited.Remove(cave);
+                        }
+                    }
+                }
+
+                return result;
+            }
+        }
     }
 
     public class Helpers
