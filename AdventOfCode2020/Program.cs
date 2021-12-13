@@ -11,7 +11,7 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            Day18.Solve();
+            Day19.Solve();
         }
     }
 
@@ -1397,6 +1397,150 @@ namespace AdventOfCode2020
                 if (expr[index] != ')') throw new Exception($"Expr[{index}] = '{expr[index]}', expected ')'");
                 index++;
                 return result;
+            }
+        }
+    }
+
+    class Day19
+    {
+        public static void Solve()
+        {
+            var testInputs = new string[]
+            {
+                "0: 4 1 5",
+                "1: 2 3 | 3 2",
+                "2: 4 4 | 5 5",
+                "3: 4 5 | 5 4",
+                "4: \"a\"",
+                "5: \"b\"",
+                "",
+                "ababbb",
+                "bababa",
+                "abbbab",
+                "aaabbb",
+                "aaaabbb",
+            };
+            var useTestInput = false;
+            var input = useTestInput ? testInputs : Helpers.LoadInput("input19.txt");
+            bool parsingRules = true;
+            var ruleSet = new RuleSet();
+            var messages = new List<string>();
+            foreach (var line in input)
+            {
+                if (parsingRules)
+                {
+                    if (line == "")
+                    {
+                        parsingRules = false;
+                    }
+                    else
+                    {
+                        var rule = Rule.Parse(line);
+                        ruleSet.Add(rule);
+                    }
+                }
+                else
+                {
+                    messages.Add(line);
+                }
+            }
+
+            string regexExpr = "^" + CreateRegex(ruleSet, 0) + "$";
+            var regex = new Regex(regexExpr);
+            int part1 = 0;
+            foreach (var message in messages)
+            {
+                Console.WriteLine($"Message {message}: {regex.IsMatch(message)}");
+                if (regex.IsMatch(message))
+                {
+                    part1++;
+                }
+            }
+
+            Console.WriteLine($"Part 1: {part1}");
+        }
+
+        private static string CreateRegex(RuleSet ruleSet, int ruleId)
+        {
+            var rule = ruleSet.Get(ruleId);
+            if (rule.IsLeaf)
+            {
+                return rule.Letter.ToString();
+            }
+
+            if (rule.NextIds.Length == 1)
+            {
+                return string.Join("", rule.NextIds[0].Select(id => CreateRegex(ruleSet, id)));
+            }
+
+            return "(" +
+                string.Join(
+                    "|",
+                    rule.NextIds.Select(
+                        ids => "(" + string.Join("", ids.Select(id => CreateRegex(ruleSet, id))) + ")"))
+                + ")";
+        }
+
+        class RuleSet
+        {
+            Dictionary<int, Rule> rules = new Dictionary<int, Rule>();
+            public void Add(Rule rule)
+            {
+                this.rules.Add(rule.Id, rule);
+            }
+            public Rule Get(int id)
+            {
+                return this.rules[id];
+            }
+            //public bool IsValid(string message)
+            //{
+            //    Rule initial = this.rules[0];
+            //    int index = 0;
+            //}
+            //private bool IsValid(Rule rule, string message, int index)
+            //{
+            //    if (rule.IsLeaf)
+            //    {
+            //        return index == message.Length - 1 && message[index] == rule.Letter;
+            //    }
+
+            //    for
+            //}
+        }
+
+        class Rule
+        {
+            public int Id;
+            public bool IsLeaf;
+            public char Letter;
+            public int[][] NextIds;
+            public Rule(int id, char letter)
+            {
+                this.Id = id;
+                this.IsLeaf = true;
+                this.Letter = letter;
+            }
+            public Rule(int id, int[][] nextIds)
+            {
+                this.Id = id;
+                this.IsLeaf = false;
+                this.NextIds = nextIds;
+            }
+            public static Rule Parse(string line)
+            {
+                int colonIndex = line.IndexOf(':');
+                int id = int.Parse(line.Substring(0, colonIndex));
+                if (line[colonIndex + 2] == '\"')
+                {
+                    // Letter
+                    return new Rule(id, line[colonIndex + 3]);
+                }
+
+                var nextIds = line.Substring(colonIndex + 1).Trim()
+                    .Split('|')
+                    .Select(p => p.Trim().Split(' ').Select(n => int.Parse(n)).ToArray())
+                    .ToArray();
+                return new Rule(id, nextIds);
             }
         }
     }
