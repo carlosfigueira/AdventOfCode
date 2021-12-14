@@ -1351,6 +1351,132 @@ namespace AdventOfCode2021
                 }
             }
         }
+
+        class Day14
+        {
+            public static void Solve()
+            {
+                var testInput = new[]
+                {
+                    "NNCB",
+                    "",
+                    "CH -> B",
+                    "HH -> N",
+                    "CB -> H",
+                    "NH -> C",
+                    "HB -> C",
+                    "HC -> B",
+                    "HN -> C",
+                    "NN -> C",
+                    "BH -> H",
+                    "NC -> B",
+                    "NB -> B",
+                    "BN -> B",
+                    "BB -> N",
+                    "BC -> B",
+                    "CC -> N",
+                    "CN -> C"
+                };
+                var useTestInput = false;
+                var input = useTestInput ? testInput : Helpers.LoadInput("input14.txt");
+                var template = input[0];
+                var rules = input.Skip(2).ToDictionary(k => k.Substring(0, 2), v => v[6]);
+
+                //var sb = new StringBuilder(template);
+                //for (int i = 1; i <= 10; i++)
+                //{
+                //    int j = 1;
+                //    while (j < sb.Length)
+                //    {
+                //        var s = new string(new[] { sb[j - 1], sb[j] });
+                //        if (rules.ContainsKey(s))
+                //        {
+                //            sb.Insert(j, rules[s]);
+                //            j += 2;
+                //        }
+                //        else
+                //        {
+                //            j++;
+                //        }
+                //    }
+
+                //    Console.WriteLine($"After {i} steps: {sb.Length}");
+                //}
+
+                //var counts = new Dictionary<char, int>();
+                //for (int i = 0; i < sb.Length; i++)
+                //{
+                //    char c = sb[i];
+                //    if (counts.ContainsKey(c))
+                //    {
+                //        counts[c]++;
+                //    }
+                //    else
+                //    {
+                //        counts.Add(c, 1);
+                //    }
+                //}
+                //var values = counts.Values.OrderBy(v => v).ToArray();
+                //Console.WriteLine($"Part 1: {values[values.Length - 1] - values[0]}");
+
+                // For part 2 we cannot go brute force; storing pairs instead
+                var pairs = new Dictionary<string, long>();
+                Action<Dictionary<string, long>, string, long> insert = (dic, pair, quantity) =>
+                {
+                    if (dic.ContainsKey(pair))
+                    {
+                        dic[pair] += quantity;
+                    }
+                    else
+                    {
+                        dic.Add(pair, quantity);
+                    }
+                };
+
+                for (int i = 0; i < template.Length - 1; i++)
+                {
+                    var pair = template.Substring(i, 2);
+                    insert(pairs, pair, 1);
+                }
+
+                for (int i = 0; i < 40; i++)
+                {
+                    var newPairs = new Dictionary<string, long>();
+                    foreach (var pair in pairs.Keys)
+                    {
+                        var mid = rules[pair];
+                        var pair1 = $"{pair[0]}{mid}";
+                        var pair2 = $"{mid}{pair[1]}";
+                        insert(newPairs, pair1, pairs[pair]);
+                        insert(newPairs, pair2, pairs[pair]);
+                    }
+
+                    pairs = newPairs;
+
+                    var letterCounts = new Dictionary<char, long>();
+                    letterCounts.Add(template[0], 1);
+                    foreach (var pair in pairs.Keys)
+                    {
+                        char c = pair[1];
+                        if (letterCounts.ContainsKey(c))
+                        {
+                            letterCounts[c] += pairs[pair];
+                        }
+                        else
+                        {
+                            letterCounts.Add(c, pairs[pair]);
+                        }
+                    }
+
+                    var letterCountStr = string.Join(
+                        ", ",
+                        letterCounts.Keys.OrderBy(k => k).Select(c => $"{c}:{letterCounts[c]}"));
+                    var onlyCounts = letterCounts.Values.OrderBy(v => v).ToArray();
+                    var maxMinusMin = onlyCounts[onlyCounts.Length - 1] - onlyCounts[0];
+                    Console.WriteLine($"After step {i + 1}, letter counts: {letterCountStr} ({letterCounts.Values.Sum()}) - {maxMinusMin}");
+                }
+            }
+        }
     }
 
     public class Helpers
