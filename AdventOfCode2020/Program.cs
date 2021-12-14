@@ -11,7 +11,7 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            Day19.Solve();
+            Day14.Solve();
         }
     }
 
@@ -1544,6 +1544,142 @@ namespace AdventOfCode2020
             }
         }
     }
+
+    class Day14
+    {
+        public static void Solve()
+        {
+            var testInput = new[]
+            {
+                "mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X",
+                "mem[8] = 11",
+                "mem[7] = 101",
+                "mem[8] = 0"
+            };
+            var useTestInput = false;
+            var input = useTestInput ? testInput : Helpers.LoadInput("input14.txt");
+
+            var memory = new Dictionary<int, long>();
+            var maskRegex = new Regex(@"^mask \= (?<mask>[01X]{36})$");
+            var memSetRegex = new Regex(@"^mem\[(?<address>\d+)\] = (?<value>\d+)");
+            string currentMask = "";
+            for (int i = 0; i < input.Length; i++)
+            {
+                var maskMatch = maskRegex.Match(input[i]);
+                if (maskMatch.Success)
+                {
+                    currentMask = maskMatch.Groups["mask"].Value;
+                }
+                else
+                {
+                    var memSetMatch = memSetRegex.Match(input[i]);
+                    if (!memSetMatch.Success) throw new ArgumentException("Invalid line: " + input[i]);
+                    int address = int.Parse(memSetMatch.Groups["address"].Value);
+                    long unmaskedValue = long.Parse(memSetMatch.Groups["value"].Value);
+                    long value = 0;
+                    long multiplier = 1;
+                    for (int b = 0; b < 36; b++)
+                    {
+                        var bitSet = currentMask[35 - b] == '1' || (currentMask[35 - b] == 'X' && (unmaskedValue & 1) == 1);
+                        if (bitSet) value += multiplier;
+                        unmaskedValue /= 2;
+                        multiplier *= 2;
+                    }
+
+                    memory[address] = value;
+                }
+            }
+
+            var part1 = memory.Values.Sum();
+            Console.WriteLine($"Part 1: {part1}");
+
+            var testInput2 = new[]
+            {
+                "mask = 000000000000000000000000000000X1001X",
+                "mem[42] = 100",
+                "mask = 00000000000000000000000000000000X0XX",
+                "mem[26] = 1"
+            };
+            if (useTestInput)
+            {
+                input = testInput2;
+            }
+
+            var memory2 = new Dictionary<long, long>();
+            for (int i = 0; i < input.Length; i++)
+            {
+                var maskMatch = maskRegex.Match(input[i]);
+                if (maskMatch.Success)
+                {
+                    currentMask = maskMatch.Groups["mask"].Value;
+                }
+                else
+                {
+                    var memSetMatch = memSetRegex.Match(input[i]);
+                    if (!memSetMatch.Success) throw new ArgumentException("Invalid line: " + input[i]);
+                    int unmaskedAddress = int.Parse(memSetMatch.Groups["address"].Value);
+                    long value = long.Parse(memSetMatch.Groups["value"].Value);
+                    var floatingBits = new List<long>();
+                    long multiplier = 1;
+                    for (int b = 0; b < 36; b++)
+                    {
+                        if (currentMask[35 - b] == 'X')
+                        {
+                            floatingBits.Add(multiplier);
+                        }
+
+                        multiplier *= 2;
+                    }
+
+                    long address = 0;
+                    multiplier = 1;
+                    long baseMemoryAddress = 0;
+                    for (int b = 0; b < 36; b++)
+                    {
+                        var bitSet = currentMask[35 - b] == '1' || (currentMask[35 - b] == '0' && (unmaskedAddress & 1) == 1);
+                        if (bitSet) baseMemoryAddress += multiplier;
+                        unmaskedAddress /= 2;
+                        multiplier *= 2;
+                    }
+
+                    foreach (var floatingValue in GetFloatingValues(floatingBits))
+                    {
+                        memory2[floatingValue + baseMemoryAddress] = value;
+                    }
+                }
+            }
+
+            var part2 = memory2.Values.Sum();
+            Console.WriteLine($"Part 2: {part2}");
+        }
+
+        static IEnumerable<long> GetFloatingValues(List<long> floatingBits)
+        {
+            int[] bits = new int[floatingBits.Count];
+            bool end = false;
+            while (!end)
+            {
+                long result = 0;
+                int i;
+                for (i = 0; i < bits.Length; i++)
+                {
+                    if (bits[i] == 1) result += floatingBits[i];
+                    yield return result;
+                }
+
+                // Move to next
+
+                for (i = bits.Length - 1; i >= 0; i--)
+                {
+                    bits[i]++;
+                    if (bits[i] == 1) break;
+                    bits[i] = 0;
+                    end = i == 0;
+                }
+            }
+        }
+    }
+
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
