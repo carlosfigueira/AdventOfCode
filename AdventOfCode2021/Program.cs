@@ -1477,6 +1477,183 @@ namespace AdventOfCode2021
                 }
             }
         }
+
+        class Day15
+        {
+            public static void Solve()
+            {
+                var testInput = new[]
+                {
+                    "1163751742",
+                    "1381373672",
+                    "2136511328",
+                    "3694931569",
+                    "7463417111",
+                    "1319128137",
+                    "1359912421",
+                    "3125421639",
+                    "1293138521",
+                    "2311944581"
+                };
+                var useTestInput = false;
+                var input =
+                    (useTestInput ? testInput : Helpers.LoadInput("input15.txt"))
+                    .Select(row => row.Select(c => c - '0').ToArray())
+                    .ToArray();
+                int rows = input.Length;
+                int cols = input[0].Length;
+
+                PriorityQueue queue = new PriorityQueue();
+                queue.Enqueue(0, 0, 0);
+                var visited = new bool[rows, cols];
+                while (!queue.IsEmpty)
+                {
+                    var nextNode = queue.Dequeue();
+                    var row = nextNode.Row;
+                    var col = nextNode.Col;
+                    if (visited[row, col])
+                    {
+                        // Already visited it in a cheaper configuration
+                        continue;
+                    }
+
+                    visited[row, col] = true;
+                    if (row == rows - 1 && col == cols - 1)
+                    {
+                        Console.WriteLine($"Part 1: {nextNode.Priority}");
+                        break;
+                    }
+
+                    // Visit neighbors
+                    if (row > 0 && !visited[row - 1, col])
+                    {
+                        queue.Enqueue(nextNode.Priority + input[row - 1][col], row - 1, col);
+                    }
+                    if (row < rows - 1 && !visited[row + 1, col])
+                    {
+                        queue.Enqueue(nextNode.Priority + input[row + 1][col], row + 1, col);
+                    }
+                    if (col > 0 && !visited[row, col - 1])
+                    {
+                        queue.Enqueue(nextNode.Priority + input[row][col - 1], row, col - 1);
+                    }
+                    if (col < cols - 1 && !visited[row, col + 1])
+                    {
+                        queue.Enqueue(nextNode.Priority + input[row][col + 1], row, col + 1);
+                    }
+                }
+
+                var part2Rows = rows * 5;
+                var part2Cols = cols * 5;
+                queue = new PriorityQueue();
+                queue.Enqueue(0, 0, 0);
+                visited = new bool[part2Rows, part2Cols];
+                while (!queue.IsEmpty)
+                {
+                    var nextNode = queue.Dequeue();
+                    var row = nextNode.Row;
+                    var col = nextNode.Col;
+                    if (visited[row, col])
+                    {
+                        // Already visited it in a cheaper configuration
+                        continue;
+                    }
+
+                    visited[row, col] = true;
+                    if (row == part2Rows - 1 && col == part2Cols - 1)
+                    {
+                        Console.WriteLine($"Part 2: {nextNode.Priority}");
+                        break;
+                    }
+
+                    Func<int, int, int, int> getUpdatedValue = (int r, int c, int v) =>
+                    {
+                        var increment = r / rows + c / cols;
+                        var newValue = v + increment;
+                        while (newValue > 9)
+                        {
+                            newValue -= 9;
+                        }
+
+                        return newValue;
+                    };
+
+                    // Visit neighbors
+                    if (row > 0 && !visited[row - 1, col])
+                    {
+                        queue.Enqueue(nextNode.Priority + getUpdatedValue(row - 1, col, input[(row - 1) % rows][col % cols]), row - 1, col);
+                    }
+                    if (row < part2Rows - 1 && !visited[row + 1, col])
+                    {
+                        queue.Enqueue(nextNode.Priority + getUpdatedValue(row + 1, col, input[(row + 1) % rows][col % cols]), row + 1, col);
+                    }
+                    if (col > 0 && !visited[row, col - 1])
+                    {
+                        queue.Enqueue(nextNode.Priority + getUpdatedValue(row, col - 1, input[row % rows][(col - 1) % cols]), row, col - 1);
+                    }
+                    if (col < part2Cols - 1 && !visited[row, col + 1])
+                    {
+                        queue.Enqueue(nextNode.Priority + getUpdatedValue(row, col + 1, input[row % rows][(col + 1) % cols]), row, col + 1);
+                    }
+                }
+            }
+
+            class Node
+            {
+                public int Priority;
+                public Node Next;
+                public int Row;
+                public int Col;
+
+                public Node(int priority, int row, int col, Node next = null)
+                {
+                    this.Priority = priority;
+                    this.Row = row;
+                    this.Col = col;
+                    this.Next = next;
+                }
+            }
+
+            class PriorityQueue
+            {
+                private Node head;
+                public PriorityQueue()
+                {
+                    this.head = null;
+                }
+                public bool IsEmpty => this.head == null;
+                public void Enqueue(int priority, int row, int col)
+                {
+                    if (this.head == null)
+                    {
+                        this.head = new Node(priority, row, col);
+                        return;
+                    }
+
+                    if (this.head.Priority >= priority)
+                    {
+                        this.head = new Node(priority, row, col, this.head);
+                        return;
+                    }
+                    Node prev = this.head;
+                    Node next = this.head.Next;
+                    while (next != null && next.Priority < priority)
+                    {
+                        prev = next;
+                        next = next.Next;
+                    }
+
+                    prev.Next = new Node(priority, row, col, next);
+                }
+                public Node Dequeue()
+                {
+                    if (this.head == null) throw new InvalidOperationException();
+                    var result = this.head;
+                    this.head = this.head.Next;
+                    return result;
+                }
+            }
+        }
     }
 
     public class Helpers
