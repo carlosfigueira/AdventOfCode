@@ -11,7 +11,7 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            Day14.Solve();
+            Day11.Solve();
         }
     }
 
@@ -1403,6 +1403,7 @@ namespace AdventOfCode2020
 
     class Day19
     {
+        // MISSING PART 2
         public static void Solve()
         {
             var testInputs = new string[]
@@ -1677,6 +1678,194 @@ namespace AdventOfCode2020
                     end = i == 0;
                 }
             }
+        }
+    }
+
+    class Day11
+    {
+        public static void Solve()
+        {
+            var testInput = new[]
+            {
+                "L.LL.LL.LL",
+                "LLLLLLL.LL",
+                "L.L.L..L..",
+                "LLLL.LL.LL",
+                "L.LL.LL.LL",
+                "L.LLLLL.LL",
+                "..L.L.....",
+                "LLLLLLLLLL",
+                "L.LLLLLL.L",
+                "L.LLLLL.LL"
+            };
+            var useTestInput = false;
+            var input = (useTestInput ? testInput : Helpers.LoadInput("input11.txt"))
+                .Select(r => r.ToCharArray())
+                .ToArray();
+            var seatLayout = input.Select(r => r).ToArray(); // clone input
+            bool changed = true;
+            int iteration = 0;
+            Console.WriteLine("Initial:");
+            if (useTestInput) Print(seatLayout);
+            while (changed)
+            {
+                Iterate(ref seatLayout, out changed);
+                iteration++;
+                Console.WriteLine("After iteration " + iteration);
+                if (useTestInput) Print(seatLayout);
+            }
+
+            int occupiedSeats = 0;
+            for (var row = 0; row < seatLayout.Length; row++)
+            {
+                for (var col = 0; col < seatLayout[row].Length; col++)
+                {
+                    if (seatLayout[row][col] == '#') occupiedSeats++;
+                }
+            }
+
+            Console.WriteLine($"Part 1: {occupiedSeats}");
+
+            seatLayout = input.Select(r => r).ToArray(); // clone input
+            iteration = 0;
+            changed = true;
+            while (changed)
+            {
+                Iterate2(ref seatLayout, out changed);
+                iteration++;
+                Console.WriteLine("After iteration " + iteration);
+                if (useTestInput) Print(seatLayout);
+            }
+
+            occupiedSeats = 0;
+            for (var row = 0; row < seatLayout.Length; row++)
+            {
+                for (var col = 0; col < seatLayout[row].Length; col++)
+                {
+                    if (seatLayout[row][col] == '#') occupiedSeats++;
+                }
+            }
+
+            Console.WriteLine($"Part 1: {occupiedSeats}");
+        }
+
+        static void Print(char[][] seatLayout)
+        {
+            for (var row = 0; row < seatLayout.Length; row++)
+            {
+                for (var col = 0; col < seatLayout[row].Length; col++)
+                {
+                    Console.Write(seatLayout[row][col]);
+                }
+                Console.WriteLine();
+            }
+        }
+
+        static void Iterate(ref char[][] seatLayout, out bool changed)
+        {
+            int rows = seatLayout.Length;
+            var newLayout = new char[rows][];
+            changed = false;
+            for (var row = 0; row < rows; row++)
+            {
+                var cols = seatLayout[row].Length;
+                newLayout[row] = new char[cols];
+                for (int col = 0; col < cols; col++)
+                {
+                    int neighbors = 0;
+                    if (seatLayout[row][col] != '.')
+                    {
+                        // No need to calculate neighbors if it is a floor
+                        for (int i = Math.Max(0, row - 1); i <= Math.Min(rows - 1, row + 1); i++)
+                        {
+                            for (int j = Math.Max(0, col - 1); j <= Math.Min(cols - 1, col + 1); j++)
+                            {
+                                if (i == row && j == col) continue;
+                                if (seatLayout[i][j] == '#') neighbors++;
+                            }
+                        }
+                    }
+
+                    if (seatLayout[row][col] == 'L' && neighbors == 0)
+                    {
+                        newLayout[row][col] = '#';
+                        changed = true;
+                    }
+                    else if (seatLayout[row][col] == '#' && neighbors >= 4)
+                    {
+                        newLayout[row][col] = 'L';
+                        changed = true;
+                    }
+                    else
+                    {
+                        newLayout[row][col] = seatLayout[row][col];
+                    }
+                }
+            }
+
+            seatLayout = newLayout;
+        }
+
+        static void Iterate2(ref char[][] seatLayout, out bool changed)
+        {
+            int rows = seatLayout.Length;
+            var newLayout = new char[rows][];
+            changed = false;
+            for (var row = 0; row < rows; row++)
+            {
+                var cols = seatLayout[row].Length;
+                newLayout[row] = new char[cols];
+                for (int col = 0; col < cols; col++)
+                {
+                    int neighbors = 0;
+                    if (seatLayout[row][col] != '.')
+                    {
+                        // No need to calculate neighbors if it is a floor
+                        for (int rowDirection = -1; rowDirection <= 1; rowDirection++)
+                        {
+                            for (int colDirection = -1; colDirection <= 1; colDirection++)
+                            {
+                                if (rowDirection == 0 && colDirection == 0) continue;
+                                int i = row, j = col;
+                                i += rowDirection; j += colDirection;
+                                while (i >= 0 && i < rows && j >= 0 && j < cols)
+                                {
+                                    if (seatLayout[i][j] == 'L')
+                                    {
+                                        // empty seat
+                                        break;
+                                    }
+                                    else if (seatLayout[i][j] == '#')
+                                    {
+                                        // occupied seat
+                                        neighbors++;
+                                        break;
+                                    }
+
+                                    i += rowDirection; j += colDirection;
+                                };
+                            }
+                        }
+                    }
+
+                    if (seatLayout[row][col] == 'L' && neighbors == 0)
+                    {
+                        newLayout[row][col] = '#';
+                        changed = true;
+                    }
+                    else if (seatLayout[row][col] == '#' && neighbors >= 5)
+                    {
+                        newLayout[row][col] = 'L';
+                        changed = true;
+                    }
+                    else
+                    {
+                        newLayout[row][col] = seatLayout[row][col];
+                    }
+                }
+            }
+
+            seatLayout = newLayout;
         }
     }
 
