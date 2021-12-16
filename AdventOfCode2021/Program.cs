@@ -1654,6 +1654,191 @@ namespace AdventOfCode2021
                 }
             }
         }
+
+        class Day16
+        {
+            public static void Solve()
+            {
+                var testInput1 = "D2FE28"; // Lit(V6)
+                var testInput2 = "38006F45291200"; // Op(V1, I0, Lit(, 10), Lit(, 20))
+                var testInput3 = "EE00D40C823060"; // Op(V7, I1, Lit(, 1), Lit(, 2), Lit(, 3))
+                var testInput4 = "8A004A801A8002F478"; // Op(V4, Op(V4, Lit(V6))) - vsum=16
+                var testInput5 = "620080001611562C8802118E34"; // Op(V3, I1, Op(, , Lit(, ), Lit(, )), Op(, , Lit(, ), Lit(, ))) - vsum=12
+                var testInput6 = "C0015000016115A2E0802F182340"; // Op(V6, I0, Op(, , Lit(, ), Lit(, )), Op(, , Lit(, ), Lit(, ))) - vsum=23
+                var testInput7 = "A0016C880162017C3686B18A3D4780"; // Op(, , Op(, , Lit(, ), Lit(, ), Lit(, ), Lit(, ), Lit(, )) - vsum=31
+                var testInputs = new[] { testInput1, testInput2, testInput3, testInput4, testInput5, testInput6, testInput7 };
+                var inputToUse = 8;
+                string input = HexToBinary(inputToUse <= 7 ? testInputs[inputToUse - 1] : Helpers.LoadInput("input16.txt")[0]);
+
+                var packet = Packet.Parse(input);
+                int part1 = SumVersions(packet);
+                Console.WriteLine($"Part 1: {part1}");
+
+                Console.WriteLine($"Part 2: {packet.Evaluate()}");
+            }
+
+            static int SumVersions(Packet packet)
+            {
+                int result = packet.Version;
+                if (packet.IsOperator)
+                {
+                    result += packet.As<OperatorPacket>().Children.Sum(p => SumVersions(p));
+                }
+
+                return result;
+            }
+
+            static Dictionary<char, string> hexValues = new Dictionary<char, string>
+            {
+                { '0', "0000" }, { '1', "0001" }, { '2', "0010" }, { '3', "0011" },
+                { '4', "0100" }, { '5', "0101" }, { '6', "0110" }, { '7', "0111" },
+                { '8', "1000" }, { '9', "1001" }, { 'A', "1010" }, { 'B', "1011" },
+                { 'C', "1100" }, { 'D', "1101" }, { 'E', "1110" }, { 'F', "1111" },
+            };
+
+            static string HexToBinary(string hex)
+            {
+                return string.Join("", hex.Select(h => hexValues[h]));
+            }
+
+            public abstract class Packet
+            {
+                public int Version { get; private set; }
+                public virtual bool IsLiteral => false;
+                public virtual bool IsOperator => false;
+                public Packet(int version)
+                {
+                    this.Version = version;
+                }
+
+                public static Packet Parse(string binary)
+                {
+                    int index = 0;
+                    return Parse(binary, ref index);
+                }
+
+                private static Packet Parse(string binary, ref int index)
+                {
+                    int version = ReadBinaryValue(binary, 3, ref index);
+                    int type = ReadBinaryValue(binary, 3, ref index);
+                    if (type == 4)
+                    {
+                        // Literal value
+                        long value = 0;
+                        bool isLast;
+                        do
+                        {
+                            value *= 16;
+                            isLast = ReadBinaryValue(binary, 1, ref index) == 0;
+                            int nibble = ReadBinaryValue(binary, 4, ref index);
+                            value += nibble;
+                        } while (!isLast);
+
+                        return new LiteralPacket(version, value);
+                    }
+                    else
+                    {
+                        // Operator
+                        int id = ReadBinaryValue(binary, 1, ref index);
+                        List<Packet> children = new List<Packet>();
+                        if (id == 0)
+                        {
+                            var totalLength = ReadBinaryValue(binary, 15, ref index);
+                            int currentIndex = index;
+                            while (index - currentIndex < totalLength)
+                            {
+                                children.Add(Parse(binary, ref index));
+                            }
+                        }
+                        else
+                        {
+                            var childCount = ReadBinaryValue(binary, 11, ref index);
+                            for (int i = 0; i < childCount; i++)
+                            {
+                                children.Add(Parse(binary, ref index));
+                            }
+                        }
+
+                        return new OperatorPacket(version, type, id, children);
+                    }
+                }
+
+                static int ReadBinaryValue(string binary, int bits, ref int index)
+                {
+                    int result = 0;
+                    for (int i = 0; i < bits; i++)
+                    {
+                        result *= 2;
+                        result += binary[index] - '0';
+                        index++;
+                    }
+
+                    return result;
+                }
+
+                public T As<T>() where T : Packet
+                {
+                    return (T)this;
+                }
+
+                public abstract long Evaluate();
+            }
+
+            [DebuggerDisplay("Literal[Version={Version},Value={Value}]")]
+            public class LiteralPacket : Packet
+            {
+                public override bool IsLiteral => true;
+                public long Value { get; private set; }
+                public LiteralPacket(int version, long value) : base(version)
+                {
+                    this.Value = value;
+                }
+
+                public override long Evaluate()
+                {
+                    return this.Value;
+                }
+            }
+
+            [DebuggerDisplay("Operator[Version={Version},Type={Type},Id={Id},Children={ChildCount}]")]
+            public class OperatorPacket : Packet
+            {
+                public override bool IsOperator => true;
+                public int Type { get; private set; }
+                public int Id { get; private set; }
+                private List<Packet> children;
+                public IEnumerable<Packet> Children => this.children.AsEnumerable();
+                public int ChildCount => this.children.Count;
+                public OperatorPacket(int version, int type, int id, IEnumerable<Packet> children) : base(version)
+                {
+                    this.Type = type;
+                    this.Id = id;
+                    this.children = children.ToList();
+                }
+
+                public override long Evaluate()
+                {
+                    switch (this.Type)
+                    {
+                        case 0: return this.children.Sum(p => p.Evaluate());
+                        case 1:
+                            long prod = 1;
+                            foreach (var child in this.children)
+                            {
+                                prod *= child.Evaluate();
+                            }
+
+                            return prod;
+                        case 2: return this.children.Min(p => p.Evaluate());
+                        case 3: return this.children.Max(p => p.Evaluate());
+                        case 5: return this.children[0].Evaluate() > this.children[1].Evaluate() ? 1 : 0;
+                        case 6: return this.children[0].Evaluate() < this.children[1].Evaluate() ? 1 : 0;
+                        case 7: return this.children[0].Evaluate() == this.children[1].Evaluate() ? 1 : 0;
+                        default: throw new InvalidOperationException();
+                    }
+                }
+            }
+        }
     }
 
     public class Helpers
