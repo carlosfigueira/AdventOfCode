@@ -11,7 +11,7 @@ namespace AdventOfCode2020
     {
         static void Main(string[] args)
         {
-            Day11.Solve();
+            Day13.Solve();
         }
     }
 
@@ -1632,7 +1632,6 @@ namespace AdventOfCode2020
                         multiplier *= 2;
                     }
 
-                    long address = 0;
                     multiplier = 1;
                     long baseMemoryAddress = 0;
                     for (int b = 0; b < 36; b++)
@@ -1866,6 +1865,42 @@ namespace AdventOfCode2020
             }
 
             seatLayout = newLayout;
+        }
+    }
+
+    class Day13
+    {
+        public static void Solve()
+        {
+            var testInput = new[]
+            {
+                "939",
+                "7,13,x,x,59,x,31,19"
+            };
+            var useTestInput = false;
+            var input = useTestInput ? testInput : Helpers.LoadInput("input13.txt");
+            var earlierTimestamp = long.Parse(input[0]);
+            var busRoutes = input[1]
+                .Split(',')
+                .Where(b => b != "x")
+                .Select(b => long.Parse(b))
+                .ToArray();
+            var closest = busRoutes
+                .Select(b =>
+                {
+                    if ((earlierTimestamp % b) == 0)
+                    {
+                        return new { Route = b, WaitTime = 0L };
+                    }
+
+                    var nextBusIteration = (earlierTimestamp + b) / b;
+                    var waitTime = (b * nextBusIteration) - earlierTimestamp;
+                    return new { Route = b, WaitTime = waitTime };
+                })
+                .OrderBy(t => t.WaitTime)
+                .Select(t => t.Route * t.WaitTime)
+                .First();
+            Console.WriteLine($"Part 1: {closest}");
         }
     }
 
