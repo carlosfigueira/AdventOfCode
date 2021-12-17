@@ -1841,6 +1841,67 @@ namespace AdventOfCode2021
                 }
             }
         }
+
+        class Day17
+        {
+            public static void Solve()
+            {
+                var testInput = "target area: x=20..30, y=-10..-5";
+                var realInput = "target area: x=206..250, y=-105..-57";
+                var useTestInput = false;
+                var inputRegex = new Regex(@"x=(\d+)\.\.(\d+), y=([\-\d]+)\.\.([\-\d]+)");
+                var inputMatch = inputRegex.Match(useTestInput ? testInput : realInput);
+                var xMin = int.Parse(inputMatch.Groups[1].Value);
+                var xMax = int.Parse(inputMatch.Groups[2].Value);
+                var yMin = int.Parse(inputMatch.Groups[3].Value);
+                var yMax = int.Parse(inputMatch.Groups[4].Value);
+
+                // Part 1: math only: the higher y velocity will be the one that after going
+                //   up will go down and hit the target area (assuming that there is an initial
+                //   x velocity that will reach 0 by the area
+                // If there are integers that satisfy vx(vx+1)/2 between 206..250, we can use it,
+                //   which is the case (20 or 21)
+                // For y, it will start with vy, and will pass by y=0 downwards with v=-vy, and
+                //   the next step will be (-vy+1). The higher value that will reach the target is
+                //   then 104 (-105 after passing by 0). The higher point is given again by
+                //   vy(vy+1)/2 = 5460
+                Console.WriteLine($"Part 1: {(useTestInput ? 45 : 5460)}");
+
+                // Part 2: - smallest value of vx that will reach the target: 20 (or 6 for test input)
+                //   - largest value of vx: xMax (reaching in 1 step)
+                //   - smallest value of vy: yMin
+                //   - highest value of vy (-yMin-1)
+                var allVelocities = new List<string>();
+                int maxHeight = 0;
+                for (int vx0 = (useTestInput ? 6 : 20); vx0 <= xMax; vx0++)
+                {
+                    for (int vy0 = yMin; vy0 < -yMin; vy0++)
+                    {
+                        int vx = vx0;
+                        int vy = vy0;
+                        int x = 0, y = 0;
+                        int maxHeightThisVelocity = int.MinValue;
+                        while (x <= xMax && y >= yMin)
+                        {
+                            if (y > maxHeightThisVelocity) maxHeightThisVelocity = y;
+                            if (xMin <= x && x <= xMax && yMin <= y && y <= yMax)
+                            {
+                                if (maxHeightThisVelocity > maxHeight) maxHeight = maxHeightThisVelocity;
+                                allVelocities.Add($"{vx0},{vy0}");
+                                break;
+                            }
+
+                            x += vx;
+                            y += vy;
+                            if (vx > 0) vx--;
+                            vy--;
+                        }
+                    }
+                }
+
+                Console.WriteLine($"Part 2: {allVelocities.Count} (max height = {maxHeight})");
+            }
+        }
     }
 
     public class Helpers
