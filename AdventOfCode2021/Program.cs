@@ -2356,6 +2356,100 @@ namespace AdventOfCode2021
                 }
             }
         }
+
+        class Day20
+        {
+            public static void Solve()
+            {
+                var testInput = new[]
+                {
+                    "..#.#..#####.#.#.#.###.##.....###.##.#..###.####..#####..#....#..#..##..###..######.###...####..#..#####..##..#.#####...##.#.#..#.##..#.#......#.###.######.###.####...#.##.##..#..#..#####.....#.#....###..#.##......#.....#..#..#..##..#...##.######.####.####.#.#...#.......#..#.#.#...####.##.#......#..#...##.#.##..#...##.#.##..###.#......#.#.......#.#.#.####.###.##...#.....####.#..#..#.##.#....##..#.####....##...##..#...#......#.#.......#.......##..####..#...#.#.#...##..#.#..###..#####........#..####......#..#",
+                    "",
+                    "#..#.",
+                    "#....",
+                    "##..#",
+                    "..#..",
+                    "..###"
+                };
+                var useTestInput = false;
+                var input = useTestInput ? testInput : Helpers.LoadInput("input20.txt");
+                var algorithm = input[0];
+                int totalIterations = 50; // 2 for part 1
+                var image = input.Skip(2).Select(l => (new string('.', totalIterations) + l + new string('.', totalIterations)).ToCharArray()).ToList();
+                var imageWidth = image[0].Length;
+                for (int i = 0; i < totalIterations; i++)
+                {
+                    image.Insert(0, new string('.', imageWidth).ToCharArray());
+                    image.Add(new string('.', imageWidth).ToCharArray());
+                }
+
+                bool outside0 = true;
+                int numRows = image.Count;
+                int numCols = imageWidth;
+                for (int row = 0; row < numRows; row++)
+                {
+                    for (int col = 0; col < numCols; col++)
+                    {
+                        if (useTestInput) Console.Write(image[row][col]);
+                    }
+
+                    if (useTestInput) Console.WriteLine();
+                }
+
+                Console.WriteLine();
+
+                for (int algoIteration = 0; algoIteration < totalIterations; algoIteration++)
+                {
+                    var newImage = Enumerable.Range(0, numRows).Select(_ => Enumerable.Range(0, numCols).Select(_2 => '.').ToArray()).ToList();
+                    for (int row = 0; row < numRows; row++)
+                    {
+                        for (int col = 0; col < numCols; col++)
+                        {
+                            int pixelValue = 0;
+                            int power2 = 256;
+                            for (int r = row - 1; r <= row + 1; r++)
+                            {
+                                for (int c = col - 1; c <= col + 1; c++)
+                                {
+                                    bool pixelOn = (r < 0 || r >= numRows || c < 0 || c >= numCols) ? !outside0 : (image[r][c] == '#');
+                                    if (pixelOn) pixelValue += power2;
+                                    power2 /= 2;
+                                }
+                            }
+
+                            newImage[row][col] = algorithm[pixelValue];
+                        }
+                    }
+
+                    image = newImage;
+
+                    if (outside0 && algorithm[0] == '#')
+                    {
+                        outside0 = false;
+                    }
+                    else if (!outside0 && algorithm[511] == '.')
+                    {
+                        outside0 = true;
+                    }
+
+                    int litPixels = 0;
+                    for (int row = 0; row < numRows; row++)
+                    {
+                        for (int col = 0; col < numCols; col++)
+                        {
+                            if (useTestInput) Console.Write(image[row][col]);
+                            if (image[row][col] == '#') litPixels++;
+                        }
+
+                        if (useTestInput) Console.WriteLine();
+                    }
+
+                    if (useTestInput) Console.WriteLine();
+
+                    Console.WriteLine($"After {algoIteration + 1} iterations, {litPixels} lit pixels");
+                }
+            }
+        }
     }
 
     public class Helpers
