@@ -14,7 +14,7 @@ namespace AdventOfCode2021
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            Day10.Solve();
+            Day18.Solve();
         }
 
         static void Day1Part1()
@@ -931,7 +931,8 @@ namespace AdventOfCode2021
                 var inputToUse = 3;
                 var input = inputToUse == 1 ? testInput1 : (inputToUse == 2 ? testInput2 : Helpers.LoadInput("input11.txt"));
                 Board board = new Board(input);
-                for (int i = 0; i < 100; i++) {
+                for (int i = 0; i < 100; i++)
+                {
                     //Console.WriteLine($"Iteration {i} (current flash count = {board.FlashCount})");
                     //board.Print();
                     board.Iterate();
@@ -977,7 +978,7 @@ namespace AdventOfCode2021
                 {
                     for (int i = 0; i < this.rows; i++)
                     {
-                        for (int j= 0; j < this.cols; j++)
+                        for (int j = 0; j < this.cols; j++)
                         {
                             Console.Write(this.energyLevels[i, j]);
                         }
@@ -1142,7 +1143,7 @@ namespace AdventOfCode2021
                         result++;
                         continue;
                     }
-                
+
                     if (nextCave == "start")
                     {
                         continue;
@@ -1900,6 +1901,459 @@ namespace AdventOfCode2021
                 }
 
                 Console.WriteLine($"Part 2: {allVelocities.Count} (max height = {maxHeight})");
+            }
+        }
+
+        class Day18
+        {
+            public static void Solve()
+            {
+                //var reduceTests = new List<Tuple<string, string>> {
+                //    Tuple.Create("[[[[[9,8],1],2],3],4]", "[[[[0,9],2],3],4]"),
+                //    Tuple.Create("[7,[6,[5,[4,[3,2]]]]]", "[7,[6,[5,[7,0]]]]"),
+                //    Tuple.Create("[[6,[5,[4,[3,2]]]],1]", "[[6,[5,[7,0]]],3]"),
+                //    Tuple.Create("[[3,[2,[1,[7,3]]]],[6,[5,[4,[3,2]]]]]", "[[3,[2,[8,0]]],[9,[5,[7,0]]]]"),
+                //};
+
+                //foreach (var test in reduceTests)
+                //{
+                //    Console.WriteLine("Testing Reduce algo 1");
+                //    var result = Reduce(test.Item1);
+                //    if (result == test.Item2)
+                //    {
+                //        Console.WriteLine("  PASS");
+                //    }
+                //    else
+                //    {
+                //        Console.WriteLine("  FAIL - expected: " + test.Item2);
+                //    }
+
+                //    Console.WriteLine("Testing Explode algo 2");
+                //    var node = Node.Parse(test.Item1);
+                //    node.Reduce();
+                //    if (node.ToString() == test.Item2)
+                //    {
+                //        Console.WriteLine("  PASS");
+                //    }
+                //    else
+                //    {
+                //        Console.WriteLine("  FAIL - expected: " + test.Item2);
+                //    }
+                //}
+
+                //var sumTests = new[] {
+                //    "[[[[4,3],4],4],[7,[[8,4],9]]]+[1,1]=[[[[0,7],4],[[7,8],[6,0]]],[8,1]]",
+                //    "[1,1]+[2,2]+[3,3]+[4,4]=[[[[1,1],[2,2]],[3,3]],[4,4]]",
+                //    "[1,1]+[2,2]+[3,3]+[4,4]+[5,5]=[[[[3,0],[5,3]],[4,4]],[5,5]]",
+                //    "[1,1]+[2,2]+[3,3]+[4,4]+[5,5]+[6,6]=[[[[5,0],[7,4]],[5,5]],[6,6]]",
+                //    "[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]+[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]+[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]+[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]+[7,[5,[[3,8],[1,4]]]]+[[2,[2,2]],[8,[8,1]]]+[2,9]+[1,[[[9,3],9],[[9,0],[0,7]]]]+[[[5,[7,4]],7],1]+[[[[4,2],2],6],[8,7]]=[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]"
+                //};
+                //foreach (var sumTest in sumTests)
+                //{
+                //    var split1 = sumTest.Split('=');
+                //    var expected = split1[1];
+                //    Console.WriteLine(split1[0]);
+                //    var terms = split1[0].Split('+').Select(t => Node.Parse(t)).ToList();
+                //    while (terms.Count > 1)
+                //    {
+                //        var sum = Node.Add(terms[0], terms[1]);
+                //        terms.RemoveAt(1);
+                //        terms[0] = sum;
+                //    }
+
+                //    if (terms[0].ToString() == expected)
+                //    {
+                //        Console.WriteLine("  PASS");
+                //    }
+                //    else
+                //    {
+                //        Console.WriteLine("  FAIL - expected " + expected);
+                //    }
+                //}
+
+                var testInput = new[]
+                {
+                    "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]",
+                    "[[[5,[2,8]],4],[5,[[9,9],0]]]",
+                    "[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]",
+                    "[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]",
+                    "[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]",
+                    "[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]",
+                    "[[[[5,4],[7,7]],8],[[8,3],8]]",
+                    "[[9,3],[[9,9],[6,[4,9]]]]",
+                    "[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]",
+                    "[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]"
+                };
+
+                var useTestInput = false;
+                var input = (useTestInput ? testInput : Helpers.LoadInput("input18.txt"))
+                    .Select(l => Node.Parse(l))
+                    .ToList();
+
+                var part1Input = input;
+                while (part1Input.Count > 1)
+                {
+                    var sum = Node.Add(part1Input[0], part1Input[1]);
+                    part1Input.RemoveAt(0);
+                    part1Input[0] = sum;
+                }
+
+                Console.WriteLine($"Part 1 result: {part1Input[0]} with magnitude {part1Input[0].Magnitude()}");
+
+                var part2Input = (useTestInput ? testInput : Helpers.LoadInput("input18.txt"))
+                    .Select(l => Node.Parse(l))
+                    .ToList();
+                long maxMagnitude = long.MinValue;
+                for (int i = 0; i < part2Input.Count - 1; i++)
+                {
+                    for (int j = i + 1; j < part2Input.Count; j++)
+                    {
+                        var sum1 = Node.Add(part2Input[i], part2Input[j]);
+                        var sum2 = Node.Add(part2Input[j], part2Input[i]);
+                        var mag1 = sum1.Magnitude();
+                        var mag2 = sum2.Magnitude();
+                        if (mag1 > maxMagnitude) maxMagnitude = mag1;
+                        if (mag2 > maxMagnitude) maxMagnitude = mag2;
+                    }
+                }
+                Console.WriteLine($"Part 2: {maxMagnitude}");
+            }
+
+            private static string Add(string number1, string number2)
+            {
+                var addition = $"[{number1},{number2}]";
+                return Reduce(addition);
+            }
+
+            private static string Reduce(string number)
+            {
+                bool keepReducing = true;
+                Console.WriteLine("Reducing " + number);
+                while (keepReducing)
+                {
+                    keepReducing = false;
+                    int depth = 0;
+                    for (int i = 0; i < number.Length; i++)
+                    {
+                        if (number[i] == '[')
+                        {
+                            depth++;
+                            if (depth > 4)
+                            {
+                                // next should be a pair of numbers
+                                keepReducing = true;
+                                var newNumber = "";
+                                AssertPair(number, i + 1);
+                                var first = number[i + 1] - '0';
+                                var second = number[i + 3] - '0';
+                                int j;
+                                for (j = i - 1; j >= 0; j--)
+                                {
+                                    if (char.IsDigit(number[j]))
+                                    {
+                                        first += number[j] - '0';
+                                        break;
+                                    }
+                                }
+
+                                if (j < 0)
+                                {
+                                    newNumber = number.Substring(0, i);
+                                }
+                                else
+                                {
+                                    newNumber = number.Substring(0, j) + first + number.Substring(j + 1, i - (j + 1));
+                                }
+
+                                newNumber += '0';
+
+                                for (j = i + 5; j < number.Length; j++)
+                                {
+                                    if (char.IsDigit(number[j]))
+                                    {
+                                        second += number[j] - '0';
+                                        break;
+                                    }
+                                }
+
+                                if (j == number.Length)
+                                {
+                                    newNumber += number.Substring(i + 5);
+                                }
+                                else
+                                {
+                                    newNumber += number.Substring(i + 5, j - (i + 5)) + second + number.Substring(j + 1);
+                                }
+
+                                number = newNumber;
+                                Console.WriteLine("Exploded to " + number);
+                                break;
+                            }
+                        }
+                        else if (number[i] == ']')
+                        {
+                            depth--;
+                        }
+                        else if (char.IsDigit(number[i]))
+                        {
+                            if (char.IsDigit(number[i + 1]))
+                            {
+                                keepReducing = true;
+                                var numberValue = (number[i] - '0') + number[i + 1] - '0';
+                                var left = numberValue / 2;
+                                var right = (numberValue + 1) / 2;
+                                number = number.Substring(0, i) +
+                                    '[' + left + ',' + right + ']' +
+                                    number.Substring(i + 2);
+                                Console.WriteLine("Split to " + number);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return number;
+            }
+
+            static void AssertPair(string number, int index)
+            {
+                if (char.IsDigit(number[index]) && number[index + 1] == ',' && char.IsDigit(number[index + 2]) && number[index + 3] == ']')
+                {
+                    // all good
+                }
+                else
+                {
+                    throw new Exception($"Not a pair for '{number}' at index {index}");
+                }
+            }
+
+            class Node
+            {
+                private long _value;
+                private Node _left;
+                private Node _right;
+                public bool IsLiteral { get; private set; }
+                public Node Parent { get; private set; }
+                public int Depth { get; private set; }
+                public long Value
+                {
+                    get
+                    {
+                        if (!this.IsLiteral) throw new InvalidOperationException();
+                        return this._value;
+                    }
+                }
+
+                public Node Left
+                {
+                    get
+                    {
+                        if (this.IsLiteral) throw new InvalidOperationException();
+                        return this._left;
+                    }
+                }
+
+                public Node Right
+                {
+                    get
+                    {
+                        if (this.IsLiteral) throw new InvalidOperationException();
+                        return this._right;
+                    }
+                }
+
+                public Node(long value)
+                {
+                    this.IsLiteral = true;
+                    this._value = value;
+                }
+
+                public Node(Node left, Node right)
+                {
+                    this.IsLiteral = false;
+                    this._left = left;
+                    this._right = right;
+                }
+
+                public Node Clone()
+                {
+                    if (this.IsLiteral) return new Node(this.Value);
+                    return new Node(this.Left.Clone(), this.Right.Clone());
+                }
+
+                public long Magnitude()
+                {
+                    if (this.IsLiteral) return this.Value;
+                    return 3 * this.Left.Magnitude() + 2 * this.Right.Magnitude();
+                }
+
+                public override string ToString()
+                {
+                    if (this.IsLiteral)
+                    {
+                        return this.Value.ToString();
+                    }
+                    else
+                    {
+                        return $"[{this.Left},{this.Right}]";
+                    }
+                }
+
+                public void Reduce()
+                {
+                    bool reduced;
+                    do
+                    {
+                        reduced = this.TryExplode();
+                        //if (reduced) Console.WriteLine("after explode:  " + this.ToString());
+                        if (!reduced)
+                        {
+                            reduced = this.TrySplit();
+                            //if (reduced) Console.WriteLine("after split:    " + this.ToString());
+                        }
+
+                        if (reduced)
+                        {
+                            UpdateOtherProperties(this);
+                        }
+                    } while (reduced);
+                }
+
+                public bool TryExplode()
+                {
+                    if (this.IsLiteral) return false;
+                    if (this.Depth < 4)
+                    {
+                        if (this.Left.TryExplode()) return true;
+                        if (this.Right.TryExplode()) return true;
+                        return false;
+                    }
+                    var leftNeighbor = this.FindLeftNeighbor();
+                    var rightNeighbor = this.FindRightNeighbor();
+                    if (leftNeighbor != null)
+                    {
+                        leftNeighbor._value += this.Left.Value;
+                    }
+
+                    if (rightNeighbor != null)
+                    {
+                        rightNeighbor._value += this.Right.Value;
+                    }
+
+                    var isLeftChild = this == this.Parent.Left;
+                    if (isLeftChild)
+                    {
+                        this.Parent._left = new Node(0);
+                    }
+                    else
+                    {
+                        this.Parent._right = new Node(0);
+                    }
+
+                    return true;
+                }
+
+                public bool TrySplit()
+                {
+                    if (!this.IsLiteral)
+                    {
+                        if (this.Left.TrySplit()) return true;
+                        if (this.Right.TrySplit()) return true;
+                        return false;
+                    }
+
+                    if (this.Value < 10) return false;
+                    var newNode = new Node(new Node(this.Value / 2), new Node((this.Value + 1) / 2));
+                    var isLeftChild = this == this.Parent.Left;
+                    if (isLeftChild)
+                    {
+                        this.Parent._left = newNode;
+                    }
+                    else
+                    {
+                        this.Parent._right = newNode;
+                    }
+
+                    return true;
+                }
+
+                private Node FindLeftNeighbor()
+                {
+                    if (this.Parent == null) return null;
+                    if (this == this.Parent.Right)
+                    {
+                        Node result = this.Parent.Left;
+                        while (!result.IsLiteral) result = result.Right;
+                        return result;
+                    }
+                    return this.Parent.FindLeftNeighbor();
+                }
+
+                private Node FindRightNeighbor()
+                {
+                    if (this.Parent == null) return null;
+                    if (this == this.Parent.Left)
+                    {
+                        Node result = this.Parent.Right;
+                        while (!result.IsLiteral) result = result.Left;
+                        return result;
+                    }
+                    return this.Parent.FindRightNeighbor();
+                }
+
+                public static Node Parse(string nodeStr)
+                {
+                    int index = 0;
+                    var result = Parse(nodeStr, ref index);
+                    UpdateOtherProperties(result);
+                    return result;
+                }
+
+                public static Node Add(Node node1, Node node2)
+                {
+                    var term1 = node1.Clone();
+                    UpdateOtherProperties(term1);
+                    var term2 = node2.Clone();
+                    UpdateOtherProperties(term2);
+                    var result = new Node(term1, term2);
+                    UpdateOtherProperties(result);
+                    result.Reduce();
+                    return result;
+                }
+
+                private static Node Parse(string nodeStr, ref int index)
+                {
+                    if (char.IsDigit(nodeStr[index]))
+                    {
+                        return new Node(nodeStr[index++] - '0');
+                    }
+
+                    AssertChar(nodeStr, index, '[');
+                    index++;
+                    var left = Parse(nodeStr, ref index);
+                    AssertChar(nodeStr, index, ',');
+                    index++;
+                    var right = Parse(nodeStr, ref index);
+                    AssertChar(nodeStr, index, ']');
+                    index++;
+                    return new Node(left, right);
+                }
+
+                private static void AssertChar(string str, int index, char expectedChar)
+                {
+                    if (str[index] != expectedChar) throw new Exception($"str[{index}] = {str[index]}, expected {expectedChar}");
+                }
+
+                private static void UpdateOtherProperties(Node node, int depth = 0, Node parent = null)
+                {
+                    node.Parent = parent;
+                    node.Depth = depth;
+                    if (!node.IsLiteral)
+                    {
+                        UpdateOtherProperties(node._left, depth + 1, node);
+                        UpdateOtherProperties(node._right, depth + 1, node);
+                    }
+                }
             }
         }
     }
