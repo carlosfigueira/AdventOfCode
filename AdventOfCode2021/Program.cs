@@ -2450,6 +2450,197 @@ namespace AdventOfCode2021
                 }
             }
         }
+
+        class Day21
+        {
+            public static void Solve()
+            {
+                var testInput = new[] {
+                    "Player 1 starting position: 4",
+                    "Player 2 starting position: 8"
+                };
+                var useTestInput = false;
+                var input = (useTestInput ? testInput : Helpers.LoadInput("input21.txt"))
+                    .Select(sp => int.Parse(sp.Substring("Player 1 starting position: ".Length)))
+                    .ToArray();
+                var p1StartingPosition = input[0];
+                var p2StartingPosition = input[1];
+                var die = new DeterministicDie();
+                var p1Score = 0;
+                var p2Score = 0;
+                var p1Position = p1StartingPosition;
+                var p2Position = p2StartingPosition;
+                var dieRolls = 0;
+                var p1Turn = true;
+                while (p1Score < 1000 && p2Score < 1000)
+                {
+                    var nextRoll = die.RollN(3) % 10;
+                    dieRolls += 3;
+                    if (p1Turn)
+                    {
+                        p1Position += nextRoll;
+                        if (p1Position > 10) p1Position -= 10;
+                        p1Score += p1Position;
+                    } else
+                    {
+                        p2Position += nextRoll;
+                        if (p2Position > 10) p2Position -= 10;
+                        p2Score += p2Position;
+                    }
+
+                    p1Turn = !p1Turn;
+                }
+
+                Console.WriteLine($"Part 1: {Math.Min(p1Score, p2Score) * dieRolls}");
+
+                //long wins1 = 0, wins2 = 0;
+                var wins = new long[3];
+                //Simulate(true, 0, 0, p1StartingPosition, p2StartingPosition, 1, ref wins1, ref wins2);
+                //Simulate2(wins, 1, p1StartingPosition, p2StartingPosition, 0, 0, 1);
+                wins[1] = Simulate3(0, p1StartingPosition, p2StartingPosition, 0, 0, p1Turn: true, first: true);
+                wins[2] = Simulate3(0, p2StartingPosition, p1StartingPosition, 0, 0, p1Turn: false, first: true);
+                Console.WriteLine($"Part 2: P1 wins in {wins[1]} universes, P2 wins in {wins[2]}. Result = {Math.Max(wins[1], wins[2])}");
+            }
+
+            static int[] combinations = new int[] { 0, 0, 0, 1, 3, 6, 7, 6, 3, 1 };
+            static long Simulate3(int diceRoll, int p1Pos, int p2Pos, int p1Score, int p2Score, bool p1Turn, bool first)
+            {
+                if (first)
+                {
+                    // Adjust starting positions to 0-based
+                    p1Pos--;
+                    p2Pos--;
+                }
+                else
+                {
+                    if (p1Turn)
+                    {
+                        p1Pos = (p1Pos + diceRoll) % 10;
+                        p1Score += p1Pos + 1;
+                        if (p1Score >= 21)
+                        {
+                            return 1;
+                        }
+                    }
+                    else
+                    {
+                        p2Pos = (p2Pos + diceRoll) % 10;
+                        p2Score += p2Pos + 1;
+                        if (p2Score >= 21)
+                        {
+                            return 0;
+                        }
+                    }
+
+                    p1Turn = !p1Turn;
+                }
+
+                long sum = 0;
+                sum += Simulate3(3, p1Pos, p2Pos, p1Score, p2Score, p1Turn, false) * 1;
+                sum += Simulate3(4, p1Pos, p2Pos, p1Score, p2Score, p1Turn, false) * 3;
+                sum += Simulate3(5, p1Pos, p2Pos, p1Score, p2Score, p1Turn, false) * 6;
+                sum += Simulate3(6, p1Pos, p2Pos, p1Score, p2Score, p1Turn, false) * 7;
+                sum += Simulate3(7, p1Pos, p2Pos, p1Score, p2Score, p1Turn, false) * 6;
+                sum += Simulate3(8, p1Pos, p2Pos, p1Score, p2Score, p1Turn, false) * 3;
+                sum += Simulate3(9, p1Pos, p2Pos, p1Score, p2Score, p1Turn, false) * 1;
+                return sum;
+            }
+            static void Simulate2(long[] wins, int playerTurn, int p1Pos, int p2Pos, int p1Score, int p2Score, int factor)
+            {
+                if (playerTurn == 1)
+                {
+                    for (int i = 3; i <= 9; i++)
+                    {
+                        int newP1Pos = p1Pos + i;
+                        if (newP1Pos > 10) newP1Pos -= 10;
+                        int newP1Score = p1Score + newP1Pos;
+                        if (newP1Score >= 21)
+                        {
+                            wins[1] += factor * combinations[i];
+                        }
+                        else
+                        {
+                            Simulate2(wins, 2, newP1Pos, p2Pos, newP1Score, p2Score, factor * combinations[i]);
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = 3; i <= 9; i++)
+                    {
+                        int newP2Pos = p2Pos + i;
+                        if (newP2Pos > 10) newP2Pos -= 10;
+                        int newP2Score = p2Score + newP2Pos;
+                        if (newP2Score >= 21)
+                        {
+                            wins[2] += factor * combinations[i];
+                        }
+                        else
+                        {
+                            Simulate2(wins, 1, p1Pos, newP2Pos, p1Score, newP2Score, factor * combinations[i]);
+                        }
+                    }
+                }
+            }
+            static void Simulate(bool p1Turn, int p1Score, int p2Score, int p1Pos, int p2Pos, int numWorlds, ref long wins1, ref long wins2)
+            {
+                var combinations3To9 = new[] { 0, 0, 0, 1, 3, 6, 7, 6, 3, 1 };
+                if (p1Turn)
+                {
+                    for (var i = 3; i <= 9; i++)
+                    {
+                        var numberOfCombinations = combinations3To9[i];
+                        var newP1Pos = p1Pos + i;
+                        if (newP1Pos > 10) newP1Pos -= 10;
+                        var newP1Score = p1Score + newP1Pos;
+                        if (newP1Score >= 21)
+                        {
+                            wins1 += numWorlds * numberOfCombinations;
+                        }
+                        else
+                        {
+                            Simulate(false, newP1Score, p2Score, newP1Pos, p2Pos, numWorlds * numberOfCombinations, ref wins1, ref wins2);
+                        }
+                    }
+                }
+                else
+                {
+                    for (var i = 3; i <= 9; i++)
+                    {
+                        var numberOfCombinations = combinations3To9[i];
+                        var newP2Pos = p2Pos + i;
+                        if (newP2Pos > 10) newP2Pos -= 10;
+                        var newP2Score = p1Score + newP2Pos;
+                        if (newP2Score >= 21)
+                        {
+                            wins2 += numWorlds * numberOfCombinations;
+                        }
+                        else
+                        {
+                            Simulate(true, p1Score, newP2Score, p1Pos, newP2Pos, numWorlds * numberOfCombinations, ref wins1, ref wins2);
+                        }
+                    }
+                }
+            }
+
+            public class DeterministicDie
+            {
+                private int nextRoll = 1;
+                public int Roll()
+                {
+                    int result = this.nextRoll;
+                    this.nextRoll++;
+                    if (this.nextRoll > 100) this.nextRoll = 1;
+                    return result;
+                }
+                public int RollN(int n)
+                {
+                    int result = 0;
+                    for (int i = 0; i < n; i++) result += this.Roll();
+                    return result;
+                }
+            }
+        }
     }
 
     public class Helpers
