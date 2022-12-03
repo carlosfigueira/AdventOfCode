@@ -36,5 +36,39 @@ def day2():
 
     print("Part 2: ", total_score_part_2)
 
+def day3_get_letter_priority(letter):
+    if 'a' <= letter and letter <= 'z':
+        return ord(letter) - ord('a') + 1
+    return ord(letter) - ord('A') + 1 + 26
 
-day2()
+def day3_string_to_set(word: str):
+    result = set()
+    for letter in word:
+        result.add(letter)
+    return result
+
+def day3():
+    lines = read_input("input3.txt")
+    #lines = ["vJrwpWtwJgWrhcsFMMfFFhFp","jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL","PmmdzqPrVvPwwTWBwg","wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn","ttgJtRGJQctTZtZT","CrZsJsPPZsGzwwsLwLmpwMDw"]
+    sum_priorities = 0
+    for line in lines:
+        line_len = len(line)
+        mid_line = int(line_len / 2)
+        part1 = line[0:mid_line];
+        part2 = line[mid_line:line_len]
+        set1 = day3_string_to_set(part1)
+        set2 = day3_string_to_set(part2)
+        for letter in set1.intersection(set2):
+            sum_priorities += day3_get_letter_priority(letter)
+
+    print("Part 1: ", sum_priorities)
+
+    sum_priorities = 0
+    for i in range(0, len(lines), 3):
+        group = day3_string_to_set(lines[i].strip()).intersection(day3_string_to_set(lines[i+1].strip())).intersection(day3_string_to_set(lines[i+2].strip()))
+        for letter in group:
+            sum_priorities += day3_get_letter_priority(letter)
+
+    print("Part 2: ", sum_priorities)
+
+day3()
