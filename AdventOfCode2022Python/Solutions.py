@@ -19,7 +19,7 @@ def day2():
         my_play = my_code_part_1[parts[1]]
         total_score_part_1 += hand_scores[my_play] + game_scores[(my_play, opponent_play)]
 
-    print("Part 1: ", total_score_part_1)
+    print("Day 2, part 1: ", total_score_part_1)
 
     total_score_part_2 = 0
     my_code_part_2 = {
@@ -34,7 +34,7 @@ def day2():
         my_play = my_code_part_2[(parts[1], opponent_play)]
         total_score_part_2 += hand_scores[my_play] + game_scores[(my_play, opponent_play)]
 
-    print("Part 2: ", total_score_part_2)
+    print("Day 2, part 2: ", total_score_part_2)
 
 def day3_get_letter_priority(letter):
     if 'a' <= letter and letter <= 'z':
@@ -61,7 +61,7 @@ def day3():
         for letter in set1.intersection(set2):
             sum_priorities += day3_get_letter_priority(letter)
 
-    print("Part 1: ", sum_priorities)
+    print("Day 3, part 1: ", sum_priorities)
 
     sum_priorities = 0
     for i in range(0, len(lines), 3):
@@ -69,6 +69,28 @@ def day3():
         for letter in group:
             sum_priorities += day3_get_letter_priority(letter)
 
-    print("Part 2: ", sum_priorities)
+    print("Day 3, part 2: ", sum_priorities)
 
-day3()
+def day4_between(number: int, min: int, max: int) -> bool:
+    return min <= number and number <= max
+
+def day4():
+    lines = read_input("input4.txt")
+    #lines = ["2-4,6-8","2-3,4-5","5-7,7-9","2-8,3-7","6-6,4-6","2-6,4-8"]
+    fully_contained = 0
+    overlaps = 0
+    for line in lines:
+        pair = line.split(",")
+        min1 = int(pair[0].split('-')[0]);
+        max1 = int(pair[0].split('-')[1]);
+        min2 = int(pair[1].split('-')[0]);
+        max2 = int(pair[1].split('-')[1]);
+        if (min1 <= min2 and max2 <= max1) or (min2 <= min1 and max1 <= max2):
+            fully_contained += 1
+        if day4_between(min1, min2, max2) or day4_between(max1, min2, max2) or day4_between(min2, min1, max1) or day4_between(max2, min1, max1):
+            overlaps += 1
+
+    print("Day 4, part 1: ", fully_contained)
+    print("Day 4, part 2: ", overlaps)
+
+day4()
