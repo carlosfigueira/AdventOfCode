@@ -1,3 +1,7 @@
+import re
+from copy import deepcopy
+from functools import reduce
+
 def read_input(fileName: str):
     theFile = open(fileName, "r")
     return theFile.readlines()
@@ -93,4 +97,59 @@ def day4():
     print("Day 4, part 1: ", fully_contained)
     print("Day 4, part 2: ", overlaps)
 
-day4()
+def day5():
+    lines = read_input("input5.txt")
+    #lines = ["    [D]    ","[N] [C]    ","[Z] [M] [P]"," 1   2   3 ","","move 1 from 2 to 1","move 3 from 1 to 3","move 2 from 2 to 1","move 1 from 1 to 2"]
+
+    crates = []
+    initialization = True
+    num_crates = 0
+    moves = []
+    for i in range(10):
+        crates.append([])
+
+    for line in lines:
+        if line.strip() == "":
+            initialization = False
+            initial_state = deepcopy(crates)
+            continue
+        if initialization:
+            crate_number = 0
+            num_crates = max(num_crates, int((len(line) + 1) / 4))
+            for i in range(1, len(line), 4):
+                crate_number += 1
+                if ord(line[i]) >= ord('A'):
+                    crates[crate_number].insert(0, line[i])
+        else:
+            moves.append(line)
+
+    for line in moves:
+        match_obj = re.match(r'move (\d+) from (\d) to (\d)', line)
+        crates_to_move = int(match_obj.group(1))
+        move_from = int(match_obj.group(2))
+        move_to = int(match_obj.group(3))
+        for i in range(crates_to_move):
+            crates[move_to].append(crates[move_from].pop())
+
+    part1_answer = ""
+    for crate in crates:
+        if len(crate) > 0:
+            part1_answer += crate.pop()
+    print("Day 5, part 1: ", part1_answer)
+
+    # Restoring initial state
+    crates = deepcopy(initial_state)
+    for line in moves:
+        match_obj = re.match(r'move (\d+) from (\d) to (\d)', line)
+        crates_to_move = int(match_obj.group(1))
+        move_from = int(match_obj.group(2))
+        move_to = int(match_obj.group(3))
+        temp = []
+        for i in range(crates_to_move):
+            temp.append(crates[move_from].pop())
+        for i in range(crates_to_move):
+            crates[move_to].append(temp.pop())
+
+    part2_answer = reduce(lambda a, b: a + b.pop(), crates[1:num_crates + 1], "")
+    print("Day 5, part 2: ", part2_answer)
+day5()
