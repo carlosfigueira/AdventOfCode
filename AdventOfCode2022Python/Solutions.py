@@ -152,4 +152,47 @@ def day5():
 
     part2_answer = reduce(lambda a, b: a + b.pop(), crates[1:num_crates + 1], "")
     print("Day 5, part 2: ", part2_answer)
-day5()
+
+def day6_first_unique_n_characters(input: str, n: int) -> int:
+    dict = {}
+    result = 0
+    for i in range(0,n):
+        ch = input[i]
+        cnt = dict.get(ch)
+        if cnt == None:
+            dict[ch] = 1
+        else:
+            dict[ch] = cnt + 1
+    if len(dict) == n:
+        result = n
+    else:
+        for i in range(n, len(input)):
+            prev = input[i - n]
+            next = input[i]
+            cnt = dict[prev]
+            if cnt == 1:
+                dict.pop(prev)
+            else:
+                dict[prev] -= 1
+            cnt = dict.get(next)
+            if cnt == None:
+                dict[next] = 1
+            else:
+                dict[next] = cnt + 1
+            if len(dict) == n:
+                result = i + 1 # index is 0-based, answer is 1-based
+                break
+    return result
+
+def day6():
+    lines = read_input("input6.txt")
+    #lines = ["mjqjpqmgbljsphdztnvjfqwrcgsmlb"]
+    line = lines[0]
+
+    day6_part1 = day6_first_unique_n_characters(line, 4)
+    print("Day 6, part 1: ", day6_part1)
+
+    day6_part2 = day6_first_unique_n_characters(line, 14)
+    print("Day 6, part 2: ", day6_part2)
+
+day6()
