@@ -195,4 +195,121 @@ def day6():
     day6_part2 = day6_first_unique_n_characters(line, 14)
     print("Day 6, part 2: ", day6_part2)
 
-day6()
+def day8():
+    lines = read_input("input8.txt")
+    #lines = ["30373", "25512", "65332", "33549", "35390"]
+    visible_trees: list[list[int]] = []
+    rows = len(lines)
+    cols = len(lines[0].strip())
+    for row in range(rows):
+        visible_trees.append([])
+        for col in range(cols):
+            if row == 0 or row == rows - 1 or col == 0 or col == cols - 1:
+                visible_trees[row].append(int(lines[row][col]))
+            else:
+                visible_trees[row].append(-1)
+
+    for row in range(1, rows - 1):
+        max_left = int(lines[row][0])
+        for col in range(1, cols - 1):
+            curr_tree = int(lines[row][col])
+            if max_left < curr_tree:
+                max_left = curr_tree
+                visible_trees[row][col] = curr_tree
+        max_right = int(lines[row][cols - 1])
+        for col in range(cols - 2, 0, -1):
+            curr_tree = int(lines[row][col])
+            if max_right < curr_tree:
+                visible_trees[row][col] = curr_tree
+                max_right = curr_tree
+    for col in range(1, cols - 1):
+        max_top = int(lines[0][col])
+        for row in range(1, rows - 1):
+            curr_tree = int(lines[row][col])
+            if max_top < curr_tree:
+                visible_trees[row][col] = curr_tree
+                max_top = curr_tree
+        max_bottom = int(lines[rows - 1][col])
+        for row in range(rows - 2, 0, -1):
+            curr_tree = int(lines[row][col])
+            if max_bottom < curr_tree:
+                visible_trees[row][col] = curr_tree
+                max_bottom = curr_tree
+
+    day8_part1 = 0
+    for row in range(rows):
+        for col in range(cols):
+            if visible_trees[row][col] >= 0:
+                day8_part1 += 1
+
+    print("Day 8, part 1: ", day8_part1)
+
+    viewing_distances_left: list[list[int]] = []
+    viewing_distances_right: list[list[int]] = []
+    viewing_distances_top: list[list[int]] = []
+    viewing_distances_bottom: list[list[int]] = []
+
+    for row in range(rows):
+        viewing_distances_left.append([])
+        viewing_distances_right.append([])
+        viewing_distances_top.append([])
+        viewing_distances_bottom.append([])
+        for col in range(cols):
+            viewing_distances_left[row].append(0)
+            viewing_distances_right[row].append(0)
+            viewing_distances_top[row].append(0)
+            viewing_distances_bottom[row].append(0)
+            visible_trees[row][col] = int(lines[row][col])
+
+    for row in range(rows):
+        for col in range(1, cols - 1):
+            right_col = cols - col - 1
+            c = col - 1
+            visible_trees_to_left = 0
+            while True:
+                visible_trees_to_left += 1
+                if c == 0 or visible_trees[row][c] >= visible_trees[row][col]:
+                    break
+                c -= 1
+            viewing_distances_left[row][col] = visible_trees_to_left
+
+            c = right_col + 1
+            visible_trees_to_right = 0
+            while True:
+                visible_trees_to_right += 1
+                if c == cols - 1 or visible_trees[row][c] >= visible_trees[row][right_col]:
+                    break
+                c += 1
+            viewing_distances_right[row][right_col] = visible_trees_to_right
+
+    for col in range(cols):
+        for row in range(1, rows - 1):
+            bottom_row = rows - row - 1
+            r = row - 1
+            visible_trees_to_top = 0
+            while True:
+                visible_trees_to_top += 1
+                if r == 0 or visible_trees[r][col] >= visible_trees[row][col]:
+                    break
+                r -= 1
+            viewing_distances_top[row][col] = visible_trees_to_top
+
+            r = bottom_row + 1
+            visible_trees_to_bottom = 0
+            while True:
+                visible_trees_to_bottom += 1
+                if r == rows - 1 or visible_trees[r][col] >= visible_trees[bottom_row][col]:
+                    break
+                r += 1
+            viewing_distances_bottom[bottom_row][col] = visible_trees_to_bottom
+
+    day8_part2 = 0
+    for row in range(1, rows - 1):
+        for col in range(1, cols - 1):
+            viewing_distance = viewing_distances_left[row][col] * viewing_distances_right[row][col] * viewing_distances_top[row][col] * viewing_distances_bottom[row][col]
+            if (day8_part2 < viewing_distance):
+                day8_part2 = viewing_distance
+
+    print("Day 8, part 2: ", day8_part2)
+
+day8()
