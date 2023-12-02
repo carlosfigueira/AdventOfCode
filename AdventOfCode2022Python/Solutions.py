@@ -1,6 +1,7 @@
 import re
 from copy import deepcopy
 from functools import reduce
+from collections import deque
 
 def read_input(fileName: str):
     theFile = open(fileName, "r")
@@ -312,4 +313,183 @@ def day8():
 
     print("Day 8, part 2: ", day8_part2)
 
-day8()
+def day9():
+    lines = read_input("input9.txt")
+    #lines = ["R 4", "U 4", "L 3", "D 1", "R 4", "D 1", "L 5", "R 2"]
+    Hr = 0
+    Tr = 0
+    Hc = 0
+    Tc = 0
+
+    # Possible positions
+    REL_TOP_LEFT = 0
+    REL_TOP = 1
+    REL_TOP_RIGHT = 2
+    REL_LEFT = 3
+    REL_SAME = 4
+    REL_RIGHT = 5
+    REL_BOTTOM_LEFT = 6
+    REL_BOTTOM = 7
+    REL_BOTTOM_RIGHT = 8
+
+    head_moves = {
+        "R": (0, 1),
+        "L": (0, -1),
+        "U": (-1, 0),
+        "D": (1, 0)
+    }
+
+    tail_moves = {  # Head move, current relative position --> tail row move, tail col move, next relative position
+        ("R", REL_TOP_LEFT): (1, 1, REL_LEFT),
+        ("R", REL_TOP): (0, 0, REL_TOP_LEFT),
+        ("R", REL_TOP_RIGHT): (0, 0, REL_TOP),
+        ("R", REL_LEFT): (0, 1, REL_LEFT),
+        ("R", REL_SAME): (0, 0, REL_LEFT),
+        ("R", REL_RIGHT): (0, 0, REL_SAME),
+        ("R", REL_BOTTOM_LEFT): (-1, 1, REL_LEFT),
+        ("R", REL_BOTTOM): (0, 0, REL_BOTTOM_LEFT),
+        ("R", REL_BOTTOM_RIGHT): (0, 0, REL_BOTTOM),
+        ("L", REL_TOP_LEFT): (0, 0, REL_TOP),
+        ("L", REL_TOP): (0, 0, REL_TOP_RIGHT),
+        ("L", REL_TOP_RIGHT): (1, -1, REL_RIGHT),
+        ("L", REL_LEFT): (0, 0, REL_SAME),
+        ("L", REL_SAME): (0, 0, REL_RIGHT),
+        ("L", REL_RIGHT): (0, -1, REL_RIGHT),
+        ("L", REL_BOTTOM_LEFT): (0, 0, REL_BOTTOM),
+        ("L", REL_BOTTOM): (0, 0, REL_BOTTOM_RIGHT),
+        ("L", REL_BOTTOM_RIGHT): (-1, 1, REL_RIGHT),
+        ("U", REL_TOP_LEFT): (0, 0, REL_LEFT),
+        ("U", REL_TOP): (0, 0, REL_SAME),
+        ("U", REL_TOP_RIGHT): (0, 0, REL_RIGHT),
+        ("U", REL_LEFT): (0, 0, REL_BOTTOM_LEFT),
+        ("U", REL_SAME): (0, 0, REL_BOTTOM),
+        ("U", REL_RIGHT): (0, 0, REL_BOTTOM_RIGHT),
+        ("U", REL_BOTTOM_LEFT): (-1, 1, REL_BOTTOM),
+        ("U", REL_BOTTOM): (-1, 0, REL_BOTTOM),
+        ("U", REL_BOTTOM_RIGHT): (-1, -1, REL_BOTTOM),
+        ("D", REL_TOP_LEFT): (1, 1, REL_TOP),
+        ("D", REL_TOP): (1, 0, REL_TOP),
+        ("D", REL_TOP_RIGHT): (1, -1, REL_TOP),
+        ("D", REL_LEFT): (0, 0, REL_TOP_LEFT),
+        ("D", REL_SAME): (0, 0, REL_TOP),
+        ("D", REL_RIGHT): (0, 0, REL_TOP_RIGHT),
+        ("D", REL_BOTTOM_LEFT): (0, 0, REL_LEFT),
+        ("D", REL_BOTTOM): (0, 0, REL_SAME),
+        ("D", REL_BOTTOM_RIGHT): (0, 0, REL_RIGHT),
+    }
+
+    current_rel = REL_SAME
+
+    visited = set()
+    visited.add((Tr, Tc))
+    for line in lines:
+        parts = line.split()
+        direction = parts[0]
+        steps = int(parts[1])
+        for i in range(steps):
+            head_move = head_moves[direction]
+            tail_move = tail_moves[(direction, current_rel)]
+            Hr += head_move[0]
+            Hc += head_move[1]
+            Tr += tail_move[0]
+            Tc += tail_move[1]
+            current_rel = tail_move[2]
+            visited.add((Tr, Tc))
+    
+    print("Day 9, part 1: ", len(visited))
+
+def day12():
+    lines = read_input("input12.txt")
+    #lines = ["Sabqponm", "abcryxxl", "accszExk", "acctuvwj", "abdefghi"]
+    rows = len(lines)
+    cols = len(lines[0])
+    search_queue = deque()
+    visited = set()
+    start = None
+    end = None
+    move_options = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    for row in range(rows):
+        for col in range(cols):
+            if lines[row][col] == 'S':
+                start = (row, col)
+                lines[row] = lines[row][0:col] + 'a' + lines[row][col+1:]
+            elif lines[row][col] == 'E':
+                end = (row, col)
+                lines[row] = lines[row][0:col] + 'z' + lines[row][col+1:]
+    
+    visited.add(start)
+    search_queue.append([start, 0, f"({start[0]},{start[1]})"])
+    while len(search_queue) > 0:
+        to_visit = search_queue.pop()
+        current_row = to_visit[0][0]
+        current_col = to_visit[0][1]
+        current_dist = to_visit[1]
+        current_path = to_visit[2]
+        if current_row == end[0] and current_col == end[1]:
+            day12_part1 = current_dist
+            day12_part1_path = current_path
+            break
+        for move_option in move_options:
+            next_row = current_row + move_option[0]
+            if next_row < 0 or next_row >= rows:
+                continue # beyond maze borders
+
+            next_col = current_col + move_option[1]
+            if next_col < 0 or next_col >= cols:
+                continue # beyond maze borders
+
+            if (next_row, next_col) in visited:
+                # Already visited or enqueued
+                continue
+
+            current_cost = ord(lines[current_row][current_col])
+            next_cost = ord(lines[next_row][next_col])
+            if next_cost <= current_cost + 1:
+                if next_row == end[0] and next_col == end[1]:
+                    day12_part1 = current_dist + 1
+                    day12_part1_path = f"{current_path}-({next_row},{next_col})"
+                    break
+
+                search_queue.append([(next_row, next_col), current_dist + 1, f"{current_path}-({next_row},{next_col})"])
+                visited.add((next_row, next_col))
+
+    #print(current_path)
+    print("Day 12, part 1: ", day12_part1)
+
+    search_queue = deque()
+    visited = set()
+    search_queue.append((end[0], end[1], 0, f"({end[0]},{end[1]})"))
+    visited.add(end)
+    while len(search_queue) > 0:
+        to_visit = search_queue.pop()
+        current_row = to_visit[0]
+        current_col = to_visit[1]
+        current_dist = to_visit[2]
+        current_path = to_visit[3]
+        for move_option in move_options:
+            next_row = current_row + move_option[0]
+            if next_row < 0 or next_row >= rows:
+                continue # beyond maze borders
+
+            next_col = current_col + move_option[1]
+            if next_col < 0 or next_col >= cols:
+                continue # beyond maze borders
+
+            if (next_row, next_col) in visited:
+                # Already visited or enqueued
+                continue
+
+            current_cost = ord(lines[current_row][current_col])
+            next_cost = ord(lines[next_row][next_col])
+            if next_cost >= current_cost - 1:
+                if next_cost == ord('a'):
+                    day12_part2 = current_dist + 1
+                    break
+
+                search_queue.append((next_row, next_col, current_dist + 1, f"{current_path}-({next_row},{next_col})"))
+                visited.add((next_row, next_col))
+
+    print("Day 12, part 2: ", day12_part2)
+
+#day9() - incomplete
+day12()
