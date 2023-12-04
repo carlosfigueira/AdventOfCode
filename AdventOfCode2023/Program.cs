@@ -14,7 +14,8 @@ namespace AdventOfCode2023
         {
             // Day1.Solve();
             // Day2.Solve();
-            Day3.Solve();
+            // Day3.Solve();
+            Day4.Solve();
         }
     }
 
@@ -316,6 +317,105 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 3, part 2: " + sumGearRatios);
+        }
+    }
+
+    class Day4
+    {
+        class Card
+        {
+            public int Number { get; }
+            public List<int> WinningNumbers { get; }
+            public List<int> CardNumbers { get; }
+
+            public Card(int number, IEnumerable<int> winningNumbers, IEnumerable<int> cardNumbers)
+            {
+                Number = number;
+                WinningNumbers = new List<int>(winningNumbers);
+                CardNumbers = new List<int>(cardNumbers);
+            }
+
+            static readonly Regex CardNumberRegex = new Regex(@"Card\s+(\d+)");
+            public static Card Parse(string line)
+            {
+                int colonIndex = line.IndexOf(':');
+                var number = int.Parse(CardNumberRegex.Match(line.Substring(0, colonIndex)).Groups[1].Value);
+                line = line.Substring(colonIndex + 1);
+                var barIndex = line.IndexOf('|');
+                var winningNumbers = line.Substring(0, barIndex).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(n => int.Parse(n));
+                var cardNumbers = line.Substring(barIndex + 1).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(n => int.Parse(n));
+                return new Card(number, winningNumbers, cardNumbers);
+            }
+
+            public int WinningNumbersInCard()
+            {
+                int result = 0;
+                foreach (var cardNumber in CardNumbers)
+                {
+                    if (WinningNumbers.Contains(cardNumber))
+                    {
+                        result++;
+                    }
+                }
+
+                return result;
+            }
+        }
+
+        public static void Solve()
+        {
+            var useSample = false;
+            var lines = useSample ?
+                new[] {
+                    "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53",
+                    "Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19",
+                    "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1",
+                    "Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83",
+                    "Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36",
+                    "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"
+                } :
+                Helpers.LoadInput("day4.txt");
+
+            int part1 = 0;
+            foreach (var line in lines)
+            {
+                var card = Card.Parse(line);
+                var winningNumbers = card.WinningNumbersInCard();
+                if (winningNumbers > 0)
+                {
+                    part1 += (1 << (winningNumbers - 1));
+                }
+            }
+
+            Console.WriteLine("Day 4, part 1: " + part1);
+
+            int[] copies = new int[lines.Length];
+            for (var i = 0; i < lines.Length; i++)
+            {
+                copies[i] = 1;
+            }
+
+            var totalCards = 0;
+            for (var i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                var card = Card.Parse(line);
+                var winningNumbers = card.WinningNumbersInCard();
+                totalCards += copies[i];
+                if (winningNumbers > 0)
+                {
+                    for (int j = 0; j < winningNumbers; j++)
+                    {
+                        var lineToGetCopy = i + j + 1;
+                        if (lineToGetCopy < lines.Length)
+                        {
+                            copies[lineToGetCopy] += copies[i];
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine("Day 4, part 2: " + totalCards);
         }
     }
 
