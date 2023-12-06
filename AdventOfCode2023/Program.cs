@@ -16,7 +16,8 @@ namespace AdventOfCode2023
             // Day2.Solve();
             // Day3.Solve();
             // Day4.Solve();
-            Day5.Solve();
+            // Day5.Solve();
+            Day6.Solve();
         }
     }
 
@@ -638,6 +639,60 @@ namespace AdventOfCode2023
 
             mappedRanges.Sort((mr1, mr2) => Math.Sign(mr1.Start - mr2.Start));
             Console.WriteLine("Day 5, part 2: " + mappedRanges[0].Start);
+        }
+    }
+
+    class Day6
+    {
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = useSample ?
+                new[] { "Time:      7  15   30", "Distance:  9  40  200" } :
+                Helpers.LoadInput("day6.txt");
+
+            var timesDistances = input.Select(i =>
+                i.Substring(i.IndexOf(':') + 1)
+                .Trim()
+                .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => int.Parse(t))
+                .ToArray()).ToArray();
+            var times = timesDistances[0];
+            var distances = timesDistances[1];
+
+            long result = 1;
+            for (var i = 0; i < times.Length; i++)
+            {
+                var waysToWinRace = 0;
+                for (var t = 1; t < times[i]; t++)
+                {
+                    var d = (times[i] - t) * t;
+                    if (d > distances[i]) waysToWinRace++;
+                }
+
+                result *= waysToWinRace;
+            }
+
+            Console.WriteLine("Day 6, part 1: " + result);
+
+            var largeTime = long.Parse(input[0].Substring(input[0].IndexOf(':') + 1).Replace(" ", ""));
+            var largeDistance = long.Parse(input[1].Substring(input[1].IndexOf(':') + 1).Replace(" ", ""));
+
+            // Values where beat distance: t(largeTime - t) - largeDistance > 0
+            // -t^2 + largeTime*t - largeDistance
+            // Solving using quadratic equation
+            var delta = largeTime * largeTime - 4 * largeDistance;
+            var sqrtDelta = Math.Sqrt(delta);
+            var root1 = (largeTime - sqrtDelta) / 2;
+            var root2 = (largeTime + sqrtDelta) / 2;
+            var minTime = Math.Floor(root1);
+            var minDistance = minTime * (largeTime - minTime);
+            if (minDistance <= largeDistance) minTime++;
+            var maxTime = Math.Ceiling(root2);
+            var maxDistance = maxTime * (largeTime - maxTime);
+            if (maxDistance <= largeDistance) maxTime--;
+
+            Console.WriteLine("Day 6, part 2: " + (maxTime - minTime + 1));
         }
     }
 
