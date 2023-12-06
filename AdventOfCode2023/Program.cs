@@ -15,7 +15,8 @@ namespace AdventOfCode2023
             // Day1.Solve();
             // Day2.Solve();
             // Day3.Solve();
-            Day4.Solve();
+            // Day4.Solve();
+            Day5.Solve();
         }
     }
 
@@ -416,6 +417,227 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 4, part 2: " + totalCards);
+        }
+    }
+
+    class Day5
+    {
+        class CategoryMapEntry
+        {
+            public long FromRangeStart { get; }
+            public long ToRangeStart { get; }
+            public long RangeLength { get; }
+
+            public CategoryMapEntry(long toRangeStart, long fromRangeStart, long rangeLength)
+            {
+                ToRangeStart = toRangeStart;
+                FromRangeStart = fromRangeStart;
+                RangeLength = rangeLength;
+            }
+
+            public long Delta()
+            {
+                return ToRangeStart - FromRangeStart;
+            }
+
+            public override string ToString()
+            {
+                return $"({FromRangeStart} to {FromRangeStart + RangeLength - 1}, {Delta()})";
+            }
+        }
+
+        class CategoryMap
+        {
+            public string From { get; }
+            public string To { get; }
+            public List<CategoryMapEntry> Entries { get; }
+
+            public CategoryMap(string from, string to)
+            {
+                Entries = new List<CategoryMapEntry>();
+                From = from;
+                To = to;
+            }
+
+            public long GetDestination(long fromValue)
+            {
+                foreach (var mapEntry in Entries)
+                {
+                    var first = mapEntry.FromRangeStart;
+                    var last = first + mapEntry.RangeLength - 1;
+                    if (first <= fromValue && fromValue <= last)
+                    {
+                        return mapEntry.ToRangeStart + (fromValue - mapEntry.FromRangeStart);
+                    }
+                }
+
+                return fromValue;
+            }
+
+            public override string ToString()
+            {
+                return $"From {From} to {To}: {string.Join(", ", Entries)}";
+            }
+
+            private static Regex FromToRegex = new Regex(@"(?<from>[^\-]+)\-to\-(?<to>\S+) map:");
+            public static CategoryMap Parse(string[] lines, ref int index)
+            {
+                var match = FromToRegex.Match(lines[index++]);
+                if (!match.Success) throw new ArgumentException();
+                var from = match.Groups["from"].Value;
+                var to = match.Groups["to"].Value;
+                var result = new CategoryMap(from, to);
+                var tempEntries = new List<CategoryMapEntry>();
+                while (index < lines.Length && lines[index].Length > 0)
+                {
+                    var parts = lines[index++].Split(' ').Select(p => long.Parse(p)).ToArray();
+                    tempEntries.Add(new CategoryMapEntry(parts[0], parts[1], parts[2]));
+                }
+
+                if (index < lines.Length && lines[index].Length == 0) index++;
+                tempEntries.Sort((me1, me2) => Math.Sign(me1.FromRangeStart - me2.FromRangeStart));
+                long min = 0;
+                foreach (var tempEntry in tempEntries)
+                {
+                    if (tempEntry.FromRangeStart > min)
+                    {
+                        result.Entries.Add(new CategoryMapEntry(min, min, tempEntry.FromRangeStart - min));
+                    }
+
+                    result.Entries.Add(tempEntry);
+                    min = tempEntry.FromRangeStart + tempEntry.RangeLength;
+                }
+
+                if (min < long.MaxValue)
+                {
+                    result.Entries.Add(new CategoryMapEntry(min, min, long.MaxValue - min));
+                }
+
+                return result;
+            }
+        }
+
+        class MappedRange
+        {
+            public long Start { get; }
+            public long Length { get; }
+            public MappedRange(long start, long length)
+            {
+                Start = start;
+                Length = length;
+            }
+
+            public override string ToString()
+            {
+                return $"[{Start}, {Start + Length - 1}]";
+            }
+        }
+
+        public static void Solve()
+        {
+            var useSample = false;
+            var lines = useSample ?
+                new[] {
+                    "seeds: 79 14 55 13",
+                    "",
+                    "seed-to-soil map:",
+                    "50 98 2",
+                    "52 50 48",
+                    "",
+                    "soil-to-fertilizer map:",
+                    "0 15 37",
+                    "37 52 2",
+                    "39 0 15",
+                    "",
+                    "fertilizer-to-water map:",
+                    "49 53 8",
+                    "0 11 42",
+                    "42 0 7",
+                    "57 7 4",
+                    "",
+                    "water-to-light map:",
+                    "88 18 7",
+                    "18 25 70",
+                    "",
+                    "light-to-temperature map:",
+                    "45 77 23",
+                    "81 45 19",
+                    "68 64 13",
+                    "",
+                    "temperature-to-humidity map:",
+                    "0 69 1",
+                    "1 0 69",
+                    "",
+                    "humidity-to-location map:",
+                    "60 56 37",
+                    "56 93 4"
+                } :
+                Helpers.LoadInput("day5.txt");
+
+            var seeds = lines[0]
+                .Substring(lines[0].IndexOf(':') + 1)
+                .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => long.Parse(p))
+                .ToArray();
+
+            var mapped = seeds;
+            var maps = new List<CategoryMap>();
+            var index = 2;
+            while (index < lines.Length)
+            {
+                var map = CategoryMap.Parse(lines, ref index);
+                maps.Add(map);
+                mapped = mapped.Select(m => map.GetDestination(m)).ToArray();
+            }
+
+            Console.WriteLine("Day 5, part 1: " + mapped.Min());
+
+            var mappedRanges = new List<MappedRange>();
+            for (int i = 0; i < seeds.Length; i += 2)
+            {
+                mappedRanges.Add(new MappedRange(seeds[i], seeds[i + 1]));
+            }
+
+            mappedRanges.Sort((mr1, mr2) => Math.Sign(mr1.Start - mr2.Start));
+
+            foreach (var map in maps)
+            {
+                List<MappedRange> newRanges = new List<MappedRange>();
+                foreach (var range in mappedRanges)
+                {
+                    int rangeStartIndex = -1;
+                    for (int i = 0; i < map.Entries.Count; i++)
+                    {
+                        if (map.Entries[i].FromRangeStart <= range.Start && range.Start <= map.Entries[i].FromRangeStart + map.Entries[i].RangeLength)
+                        {
+                            rangeStartIndex = i;
+                            break;
+                        }
+                    }
+
+                    long leftInRange = range.Length;
+                    long leftInMapEntry = map.Entries[rangeStartIndex].RangeLength - (range.Start - map.Entries[rangeStartIndex].FromRangeStart);
+                    long usedFromRange = 0;
+                    while (leftInRange > 0)
+                    {
+                        long nextRangeSize = Math.Min(leftInRange, leftInMapEntry);
+                        newRanges.Add(new MappedRange(range.Start + usedFromRange + map.Entries[rangeStartIndex].Delta(), nextRangeSize));
+                        usedFromRange += nextRangeSize;
+                        leftInRange -= nextRangeSize;
+
+                        if (leftInRange > 0)
+                        {
+                            rangeStartIndex++;
+                            leftInMapEntry = map.Entries[rangeStartIndex].RangeLength;
+                        }
+                    }
+                }
+
+                mappedRanges = newRanges;
+            }
+
+            mappedRanges.Sort((mr1, mr2) => Math.Sign(mr1.Start - mr2.Start));
+            Console.WriteLine("Day 5, part 2: " + mappedRanges[0].Start);
         }
     }
 
