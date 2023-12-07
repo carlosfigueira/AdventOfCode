@@ -17,7 +17,8 @@ namespace AdventOfCode2023
             // Day3.Solve();
             // Day4.Solve();
             // Day5.Solve();
-            Day6.Solve();
+            // Day6.Solve();
+            Day7.Solve();
         }
     }
 
@@ -693,6 +694,164 @@ namespace AdventOfCode2023
             if (maxDistance <= largeDistance) maxTime--;
 
             Console.WriteLine("Day 6, part 2: " + (maxTime - minTime + 1));
+        }
+    }
+
+    class Day7
+    {
+        private enum HandType
+        {
+            FiveOfAKind = 1,
+            FourOfAKind = 2,
+            FullHouse = 3,
+            ThreeOfAKind = 4,
+            TwoPair = 5,
+            OnePair = 6,
+            HighCard = 7,
+        }
+
+        private const string CardOrderNoJoker = "AKQJT98765432";
+        private const string CardOrderWithJoker = "AKQT98765432J";
+
+        class Hand : IComparable<Hand>
+        {
+            public string Cards { get; }
+            public int Bid { get; }
+            public HandType HandType { get; }
+            private bool JIsJoker { get; }
+
+            public Hand(string cards, int bid, bool jIsJoker)
+            {
+                Cards = cards;
+                Bid = bid;
+                JIsJoker = jIsJoker;
+
+                HandType = CalculateHandType(cards);
+            }
+
+            public override string ToString()
+            {
+                return $"Hand[Cards={Cards}, Bid={Bid}, {HandType}]";
+            }
+
+            private HandType CalculateHandType(string cards)
+            {
+                var jokerCount = JIsJoker ? cards.Count(c => c == 'J') : 0;
+                var counts = cards
+                    .Where(c => !JIsJoker || c != 'J')
+                    .GroupBy(c => c)
+                    .Select(group => group.Count())
+                    .OrderByDescending(g => g)
+                    .ToArray();
+                if (counts.Length == 0)
+                {
+                    // All jokers
+                    return HandType.FiveOfAKind;
+                }
+
+                counts[0] += jokerCount;
+                if (counts[0] == 5)
+                {
+                    return HandType.FiveOfAKind;
+                }
+
+                if (counts[0] == 4)
+                {
+                    return HandType.FourOfAKind;
+                }
+
+                if (counts[0] == 3)
+                {
+                    if (counts[1] == 2)
+                    {
+                        return HandType.FullHouse;
+                    }
+                    else
+                    {
+                        return HandType.ThreeOfAKind;
+                    }
+                }
+
+                if (counts[0] == 2)
+                {
+                    if (counts[1] == 2)
+                    {
+                        return HandType.TwoPair;
+                    }
+                    else
+                    {
+                        return HandType.OnePair;
+                    }
+                }
+
+                return HandType.HighCard;
+            }
+
+            public static Hand Parse(string line, bool jIsJoker)
+            {
+                var parts = line.Split(' ');
+                var cards = parts[0];
+                var bid = int.Parse(parts[1]);
+                return new Hand(cards, bid, jIsJoker);
+            }
+
+            public int CompareTo(Hand other)
+            {
+                if (this.HandType != other.HandType)
+                {
+                    return this.HandType - other.HandType;
+                }
+
+                var CardOrder = JIsJoker ? CardOrderWithJoker : CardOrderNoJoker;
+                for (var i = 0; i < this.Cards.Length; i++)
+                {
+                    var thisRank = CardOrder.IndexOf(this.Cards[i]);
+                    var otherRank = CardOrder.IndexOf(other.Cards[i]);
+                    if (thisRank != otherRank)
+                    {
+                        return thisRank - otherRank;
+                    }
+                }
+
+                return 0;
+            }
+        }
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = useSample ?
+                new[] {
+                    "32T3K 765",
+                    "T55J5 684",
+                    "KK677 28",
+                    "KTJJT 220",
+                    "QQQJA 483"
+                } :
+                Helpers.LoadInput("day7.txt");
+
+            var allHands = input.Select(l => Hand.Parse(l, jIsJoker: false)).ToList();
+            allHands.Sort();
+            long totalWinnings = 0;
+            var currentRank = allHands.Count;
+            for (int i = 0; i < allHands.Count; i++)
+            {
+                totalWinnings += allHands[i].Bid * currentRank;
+                currentRank--;
+            }
+
+            Console.WriteLine("Day 7, part 1: " + totalWinnings);
+
+            allHands = input.Select(l => Hand.Parse(l, jIsJoker: true)).ToList();
+            allHands.Sort();
+            totalWinnings = 0;
+            currentRank = allHands.Count;
+            for (int i = 0; i < allHands.Count; i++)
+            {
+                totalWinnings += allHands[i].Bid * currentRank;
+                currentRank--;
+            }
+
+            Console.WriteLine("Day 7, part 1: " + totalWinnings);
         }
     }
 
