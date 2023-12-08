@@ -886,7 +886,69 @@ namespace AdventOfCode2023
                 directionIndex = (directionIndex + 1) % directions.Length;
             }
 
-            Console.WriteLine(count);
+            Console.WriteLine("Day 8, part 1: " + count);
+
+            var primes = new[] { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151 };
+            var primeFactors = new Dictionary<int, int>();
+
+            var aNodes = dict.Keys.Where(n => n[2] == 'A').ToArray();
+            var stepsToZ = new int[aNodes.Length];
+            for (int i = 0; i < aNodes.Length; i++)
+            {
+                current = aNodes[i];
+                count = 0;
+                directionIndex = 0;
+                while (current[2] != 'Z')
+                {
+                    count++;
+                    var next = dict[current];
+                    current = directions[directionIndex] == 'L' ? next.Item1 : next.Item2;
+                    directionIndex = (directionIndex + 1) % directions.Length;
+                }
+
+                stepsToZ[i] = count;
+
+                while (count > 1)
+                {
+                    foreach (var prime in primes)
+                    {
+                        var factor = 0;
+                        while ((count % prime) == 0)
+                        {
+                            factor++;
+                            count /= prime;
+                        }
+
+                        if (factor > 0)
+                        {
+                            if (!primeFactors.ContainsKey(prime))
+                            {
+                                primeFactors.Add(prime, factor);
+                            }
+                            else
+                            {
+                                primeFactors[prime] = Math.Max(factor, primeFactors[prime]);
+                            }
+                        }
+
+                        if (count == 1) break;
+                    }
+
+                    if (count > 1)
+                    {
+                        primeFactors[count] = 1;
+                        count = 1;
+                    }
+                }
+            }
+
+            long part2Result = 1;
+            foreach (var prime in primeFactors.Keys)
+            {
+                for (var i = 0; i < primeFactors[prime]; i++) part2Result *= prime;
+            }
+
+            Console.WriteLine("Day 8, part 2: " + part2Result);
         }
     }
 
