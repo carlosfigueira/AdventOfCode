@@ -888,6 +888,7 @@ namespace AdventOfCode2023
 
             Console.WriteLine("Day 8, part 1: " + count);
 
+            // Large value of 'stepsToZ' is around 21000, so no need to have primes beyond Sqrt(21000) which is less than 150
             var primes = new[] { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151 };
             var primeFactors = new Dictionary<int, int>();
 
