@@ -18,7 +18,8 @@ namespace AdventOfCode2023
             // Day4.Solve();
             // Day5.Solve();
             // Day6.Solve();
-            Day7.Solve();
+            // Day7.Solve();
+            Day8.Solve();
         }
     }
 
@@ -852,6 +853,40 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 7, part 1: " + totalWinnings);
+        }
+    }
+
+    class Day8
+    {
+        public static void Solve()
+        {
+            var useSample1 = false;
+            var useSample2 = false;
+            var input = useSample1 ?
+                new[] { "RL", "", "AAA = (BBB, CCC)", "BBB = (DDD, EEE)", "CCC = (ZZZ, GGG)", "DDD = (DDD, DDD)", "EEE = (EEE, EEE)", "GGG = (GGG, GGG)", "ZZZ = (ZZZ, ZZZ)" } :
+                useSample2 ?
+                new[] { "LLR", "", "AAA = (BBB, BBB)", "BBB = (AAA, ZZZ)", "ZZZ = (ZZZ, ZZZ)" } :
+                Helpers.LoadInput("day8.txt");
+
+            var directions = input[0];
+            var dict = new Dictionary<string, Tuple<string, string>>();
+            for (int i = 2; i < input.Length; i++)
+            {
+                dict.Add(input[i].Substring(0, 3), Tuple.Create(input[i].Substring(7, 3), input[i].Substring(12, 3)));
+            }
+
+            var count = 0;
+            var directionIndex = 0;
+            var current = "AAA";
+            while (current != "ZZZ")
+            {
+                count++;
+                var next = dict[current];
+                current = directions[directionIndex] == 'L' ? next.Item1 : next.Item2;
+                directionIndex = (directionIndex + 1) % directions.Length;
+            }
+
+            Console.WriteLine(count);
         }
     }
 
