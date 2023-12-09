@@ -19,7 +19,8 @@ namespace AdventOfCode2023
             // Day5.Solve();
             // Day6.Solve();
             // Day7.Solve();
-            Day8.Solve();
+            // Day8.Solve();
+            Day9.Solve();
         }
     }
 
@@ -950,6 +951,57 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 8, part 2: " + part2Result);
+        }
+    }
+
+    class Day9
+    {
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = useSample ?
+                new[] { "0 3 6 9 12 15", "1 3 6 10 15 21", "10 13 16 21 30 45" } :
+                Helpers.LoadInput("day9.txt");
+
+            var values = input.Select(l => l.Split(' ').Select(p => long.Parse(p)).ToList()).ToArray();
+
+            long part1 = 0, part2 = 0;
+
+            foreach (var line in values)
+            {
+                var newLines = new List<List<long>>();
+                var currList = line;
+                newLines.Add(line);
+                for (int i = 0; i < line.Count; i++)
+                {
+                    var newList = new List<long>();
+                    newLines.Add(newList);
+                    var allZeros = true;
+                    for (int j = 0; j < currList.Count - 1; j++)
+                    {
+                        var newValue = currList[j + 1] - currList[j];
+                        newList.Add(newValue);
+                        if (newValue != 0) allZeros = false;
+                    }
+
+                    currList = newList;
+                    if (allZeros) break;
+                }
+
+                var extrapolateAfter = new List<long> { 0 };
+                var extrapolateBefore = new List<long> { 0 };
+                for (int i = newLines.Count - 2; i >= 0; i--)
+                {
+                    extrapolateAfter.Add(extrapolateAfter.Last() + newLines[i].Last());
+                    extrapolateBefore.Add(newLines[i][0] - extrapolateBefore.Last());
+                }
+
+                part1 += extrapolateAfter.Last();
+                part2 += extrapolateBefore.Last();
+            }
+
+            Console.WriteLine("Day 9, part 1: " + part1);
+            Console.WriteLine("Day 9, part 2: " + part2);
         }
     }
 
