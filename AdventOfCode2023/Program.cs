@@ -20,7 +20,8 @@ namespace AdventOfCode2023
             // Day6.Solve();
             // Day7.Solve();
             // Day8.Solve();
-            Day9.Solve();
+            // Day9.Solve();
+            Day10.Solve();
         }
     }
 
@@ -1002,6 +1003,96 @@ namespace AdventOfCode2023
 
             Console.WriteLine("Day 9, part 1: " + part1);
             Console.WriteLine("Day 9, part 2: " + part2);
+        }
+    }
+
+    class Day10
+    {
+        enum Direction { North, East, South, West };
+        static void NextStep(string[] input, ref int row, ref int col, ref Direction direction)
+        {
+            var currentInput = input[row][col];
+            switch (direction)
+            {
+                case Direction.North:
+                    switch(currentInput)
+                    {
+                        case '|': row--; break;
+                        case '7': col--; direction = Direction.West; break;
+                        case 'F': col++; direction = Direction.East; break;
+                        default: throw new ArgumentException();
+                    }
+
+                    break;
+                case Direction.South:
+                    switch (currentInput)
+                    {
+                        case '|': row++; break;
+                        case 'J': col--; direction = Direction.West; break;
+                        case 'L': col++; direction = Direction.East; break;
+                        default: throw new ArgumentException();
+                    }
+
+                    break;
+                case Direction.East:
+                    switch (currentInput)
+                    {
+                        case '-': col++; break;
+                        case '7': row++; direction = Direction.South; break;
+                        case 'J': row--; direction = Direction.North; break;
+                        default: throw new ArgumentException();
+                    }
+                    break;
+                case Direction.West:
+                    switch (currentInput)
+                    {
+                        case '-': col--; break;
+                        case 'F': row++; direction = Direction.South; break;
+                        case 'L': row--; direction = Direction.North; break;
+                        default: throw new ArgumentException();
+                    }
+                    break;
+            }
+        }
+
+        public static void Solve()
+        {
+            var useSample1 = false;
+            var useSample2 = false;
+            var input = useSample1 ?
+                new[] { "-L|F7", "7S-7|", "L|7||", "-L-J|", "L|-JF" } :
+                useSample2 ?
+                new[] { "7-F7-", ".FJ|7", "SJLL7", "|F--J", "LJ.LJ" } :
+                Helpers.LoadInput("day10.txt");
+
+            var startDirection = useSample1 ? Direction.North : useSample2 ? Direction.North : Direction.North;
+            var startLetter = useSample1 ? 'F' : useSample2 ? 'F' : '|';
+            int startRow = -1, startCol = -1;
+            for (var i = 0; i < input.Length; i++)
+            {
+                for (var j = 0; j < input.Length; j++)
+                {
+                    if (input[i][j] == 'S')
+                    {
+                        startRow = i;
+                        startCol = j;
+                        input[i] = input[i].Substring(0, j) + startLetter + input[i].Substring(j + 1);
+                        break;
+                    }
+                }
+            }
+
+            var totalSteps = 0;
+            var currentRow = startRow;
+            var currentCol = startCol;
+            var currentDirection = startDirection;
+            do
+            {
+                NextStep(input, ref currentRow, ref currentCol, ref currentDirection);
+                totalSteps++;
+            } while (currentRow != startRow || currentCol != startCol);
+
+            Console.WriteLine("Day 10, part 1: " + (totalSteps / 2));
         }
     }
 
