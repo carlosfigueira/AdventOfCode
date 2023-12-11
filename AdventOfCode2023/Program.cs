@@ -1059,14 +1059,17 @@ namespace AdventOfCode2023
         {
             var useSample1 = false;
             var useSample2 = false;
+            var useSample3 = false;
             var input = useSample1 ?
                 new[] { "-L|F7", "7S-7|", "L|7||", "-L-J|", "L|-JF" } :
                 useSample2 ?
                 new[] { "7-F7-", ".FJ|7", "SJLL7", "|F--J", "LJ.LJ" } :
+                useSample3 ?
+                new[] { "...........", ".S-------7.", ".|F-----7|.", ".||.....||.", ".||.....||.", ".|L-7.F-J|.", ".|..|.|..|.", ".L--J.L--J.", "..........." } :
                 Helpers.LoadInput("day10.txt");
 
             var startDirection = useSample1 ? Direction.North : useSample2 ? Direction.North : Direction.North;
-            var startLetter = useSample1 ? 'F' : useSample2 ? 'F' : '|';
+            var startLetter = useSample1 ? 'F' : useSample2 ? 'F' : useSample3 ? 'F' : '|';
             int startRow = -1, startCol = -1;
             for (var i = 0; i < input.Length; i++)
             {
@@ -1086,13 +1089,56 @@ namespace AdventOfCode2023
             var currentRow = startRow;
             var currentCol = startCol;
             var currentDirection = startDirection;
+
+            var visited = new HashSet<Tuple<int, int>>();
             do
             {
+                visited.Add(Tuple.Create(currentRow, currentCol));
                 NextStep(input, ref currentRow, ref currentCol, ref currentDirection);
                 totalSteps++;
             } while (currentRow != startRow || currentCol != startCol);
 
             Console.WriteLine("Day 10, part 1: " + (totalSteps / 2));
+
+            // Idea for part 2 from https://www.reddit.com/r/adventofcode/comments/18evyu9/comment/kcqphay/
+            var newInput = new List<string>();
+            for (var i = 0; i < input.Length; i++)
+            {
+                var sb = new StringBuilder();
+                for (var j = 0; j < input[i].Length; j++)
+                {
+                    if (visited.Contains(Tuple.Create(i, j)))
+                    {
+                        sb.Append(input[i][j]);
+                    }
+                    else
+                    {
+                        sb.Append('.');
+                    }
+                }
+
+                newInput.Add(
+                    Regex.Replace(
+                        Regex.Replace(
+                            sb.ToString(),
+                            "F-*7|L-*J",
+                            ""),
+                        "F-*J|L-*7",
+                        "|"));
+            }
+
+            var part2 = 0;
+            foreach (var line in newInput)
+            {
+                var inside = false;
+                foreach (var c in line)
+                {
+                    if (c == '|') inside = !inside;
+                    if (c == '.' && inside) part2++;
+                }
+            }
+
+            Console.WriteLine("Day 10, part 2: " + part2);
         }
     }
 
