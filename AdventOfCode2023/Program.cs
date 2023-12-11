@@ -1170,7 +1170,7 @@ namespace AdventOfCode2023
                 if (isEmpty) emptyRows.Add(i);
             }
 
-            var emptyCols = new List<int>();
+            var emptyCols = new HashSet<int>();
             for (var j = 0; j < cols; j++)
             {
                 var isEmpty = true;
@@ -1236,6 +1236,59 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 11, part 1: " + part1);
+
+            long part2 = 0;
+            List<Tuple<int, int>> originalStars = new List<Tuple<int, int>>();
+            rows = input.Length;
+            cols = input[0].Length;
+            for (var i = 0; i < rows; i++)
+            {
+                for (var j = 0; j < cols; j++)
+                {
+                    if (input[i][j] == '#')
+                    {
+                        originalStars.Add(Tuple.Create(i, j));
+                    }
+                }
+            }
+
+            int expansionFactor = 1000000;
+            for (int i = 0; i < originalStars.Count; i++)
+            {
+                var star1 = originalStars[i];
+                for (int j = i + 1; j < originalStars.Count; j++)
+                {
+                    var star2 = originalStars[j];
+                    int fromRow = Math.Min(star1.Item1, star2.Item1);
+                    int toRow = Math.Max(star1.Item1, star2.Item1);
+                    int fromCol = Math.Min(star1.Item2, star2.Item2);
+                    int toCol = Math.Max(star1.Item2, star2.Item2);
+                    for (int row = fromRow + 1; row <= toRow; row++)
+                    {
+                        if (emptyRows.Contains(row))
+                        {
+                            part2 += expansionFactor;
+                        }
+                        else
+                        {
+                            part2 += 1;
+                        }
+                    }
+                    for (int col = fromCol + 1; col <= toCol; col++)
+                    {
+                        if (emptyCols.Contains(col))
+                        {
+                            part2 += expansionFactor;
+                        }
+                        else
+                        {
+                            part2 += 1;
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine("Day 11, part 2: " + part2);
         }
     }
 
