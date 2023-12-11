@@ -21,7 +21,8 @@ namespace AdventOfCode2023
             // Day7.Solve();
             // Day8.Solve();
             // Day9.Solve();
-            Day10.Solve();
+            // Day10.Solve();
+            Day11.Solve();
         }
     }
 
@@ -1139,6 +1140,102 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 10, part 2: " + part2);
+        }
+    }
+
+    class Day11
+    {
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = useSample ?
+                new[] { "...#......", ".......#..", "#.........", "..........", "......#...", ".#........", ".........#", "..........", ".......#..", "#...#....." } :
+                Helpers.LoadInput("day11.txt");
+            var rows = input.Length;
+            var cols = input[0].Length;
+
+            var emptyRows = new HashSet<int>();
+            for (var i = 0; i < rows; i++)
+            {
+                var isEmpty = true;
+                for (var j = 0; j < cols; j++)
+                {
+                    if (input[i][j] == '#')
+                    {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+
+                if (isEmpty) emptyRows.Add(i);
+            }
+
+            var emptyCols = new List<int>();
+            for (var j = 0; j < cols; j++)
+            {
+                var isEmpty = true;
+                for (var i = 0; i < rows; i++)
+                {
+                    if (input[i][j] == '#')
+                    {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+
+                if (isEmpty) emptyCols.Add(j);
+            }
+
+            var expandedRows = new List<string>();
+            for (int i = 0; i < rows; i++)
+            {
+                expandedRows.Add(input[i]);
+                if (emptyRows.Contains(i))
+                {
+                    expandedRows.Add(input[i]);
+                }
+            }
+
+            rows = expandedRows.Count;
+
+            for (int i = 0; i < rows; i++)
+            {
+                var sb = new StringBuilder();
+                for (int j = 0; j < cols; j++)
+                {
+                    sb.Append(expandedRows[i][j]);
+                    if (emptyCols.Contains(j)) sb.Append('.');
+                }
+
+                expandedRows[i] = sb.ToString();
+            }
+
+            cols = expandedRows[0].Length;
+
+            List<Tuple<int, int>> stars = new List<Tuple<int, int>>();
+            for (var i = 0; i < rows; i++)
+            {
+                for (var j = 0; j < cols; j++)
+                {
+                    if (expandedRows[i][j] == '#')
+                    {
+                        stars.Add(Tuple.Create(i, j));
+                    }
+                }
+            }
+
+            int part1 = 0;
+            for (int i = 0; i < stars.Count; i++)
+            {
+                var star1 = stars[i];
+                for (int j = i + 1; j < stars.Count; j++)
+                {
+                    var star2 = stars[j];
+                    part1 += Math.Abs(star1.Item1 - star2.Item1) + Math.Abs(star1.Item2 - star2.Item2);
+                }
+            }
+
+            Console.WriteLine("Day 11, part 1: " + part1);
         }
     }
 
