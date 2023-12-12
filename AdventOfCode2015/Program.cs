@@ -71,10 +71,11 @@ namespace AdventOfCode2015
         public static void Solve()
         {
             var input = Helpers.LoadInput("day3.txt");
+            var directions = input[0];
+
             var visited = new HashSet<Coord2D>();
             var x = 0;
             var y = 0;
-            var directions = input[0];
             visited.Add(new Coord2D(x, y));
             foreach (var c in directions)
             {
@@ -90,6 +91,43 @@ namespace AdventOfCode2015
             }
 
             Console.WriteLine("Day 3, part 1: " + visited.Count);
+
+            visited.Clear();
+            x = 0;
+            y = 0;
+            var x2 = 0;
+            var y2 = 0;
+            var useFirst = true;
+            visited.Add(new Coord2D(x, y));
+            foreach (var c in directions)
+            {
+                if (useFirst)
+                {
+                    switch (c)
+                    {
+                        case '^': y--; break;
+                        case 'v': y++; break;
+                        case '>': x++; break;
+                        case '<': x--; break;
+                    }
+                }
+                else
+                {
+                    switch (c)
+                    {
+                        case '^': y2--; break;
+                        case 'v': y2++; break;
+                        case '>': x2++; break;
+                        case '<': x2--; break;
+                    }
+                }
+
+                visited.Add(new Coord2D(x, y));
+                visited.Add(new Coord2D(x2, y2));
+                useFirst = !useFirst;
+            }
+
+            Console.WriteLine("Day 3, part 2: " + visited.Count);
         }
     }
 
