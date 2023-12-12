@@ -52,13 +52,16 @@ namespace AdventOfCode2015
         {
             var input = Helpers.LoadInput("day2.txt");
             long part1 = 0;
+            long part2 = 0;
             foreach (var line in input)
             {
                 var numbers = line.Split('x').Select(n => int.Parse(n)).OrderBy(n => n).ToArray();
                 part1 += 3 * numbers[0] * numbers[1] + 2 * numbers[0] * numbers[2] + 2 * numbers[1] * numbers[2];
+                part2 += 2 * (numbers[0] + numbers[1]) + numbers[0] * numbers[1] * numbers[2];
             }
 
             Console.WriteLine("Day 2, part 1: " + part1);
+            Console.WriteLine("Day 2, part 2: " + part2);
         }
     }
     public class Helpers
