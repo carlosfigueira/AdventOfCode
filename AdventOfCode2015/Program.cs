@@ -11,7 +11,8 @@ namespace AdventOfCode2015
     {
         static void Main(string[] args)
         {
-            Day1.Solve();
+            //Day1.Solve();
+            Day2.Solve();
         }
     }
 
@@ -45,6 +46,21 @@ namespace AdventOfCode2015
         }
     }
 
+    class Day2
+    {
+        public static void Solve()
+        {
+            var input = Helpers.LoadInput("day2.txt");
+            long part1 = 0;
+            foreach (var line in input)
+            {
+                var numbers = line.Split('x').Select(n => int.Parse(n)).OrderBy(n => n).ToArray();
+                part1 += 3 * numbers[0] * numbers[1] + 2 * numbers[0] * numbers[2] + 2 * numbers[1] * numbers[2];
+            }
+
+            Console.WriteLine("Day 2, part 1: " + part1);
+        }
+    }
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
