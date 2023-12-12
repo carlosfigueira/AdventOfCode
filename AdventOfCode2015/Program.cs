@@ -137,16 +137,26 @@ namespace AdventOfCode2015
         public static void Solve()
         {
             var input = "ckczppom";
+            var foundPart1 = false;
             using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
             {
                 for (int i = 0; i < 100000000; i++)
                 {
                     byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input + i);
                     byte[] hashBytes = md5.ComputeHash(inputBytes);
-                    if (hashBytes[0] == 0 && hashBytes[1] == 0 && (hashBytes[2] & 0xF0) == 0)
+                    if (hashBytes[0] == 0 && hashBytes[1] == 0)
                     {
-                        Console.WriteLine("Day 4, part 1: " + i);
-                        break;
+                        if (!foundPart1 && (hashBytes[2] & 0xF0) == 0)
+                        {
+                            foundPart1 = true;
+                            Console.WriteLine("Day 4, part 1: " + i);
+                        }
+
+                        if (hashBytes[2] == 0)
+                        {
+                            Console.WriteLine("Day 4, part 2: " + i);
+                            break;
+                        }
                     }
                 }
             }
