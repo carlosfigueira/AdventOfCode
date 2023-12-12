@@ -12,7 +12,8 @@ namespace AdventOfCode2015
         static void Main(string[] args)
         {
             //Day1.Solve();
-            Day2.Solve();
+            //Day2.Solve();
+            Day3.Solve();
         }
     }
 
@@ -64,6 +65,56 @@ namespace AdventOfCode2015
             Console.WriteLine("Day 2, part 2: " + part2);
         }
     }
+
+    class Day3
+    {
+        public static void Solve()
+        {
+            var input = Helpers.LoadInput("day3.txt");
+            var visited = new HashSet<Coord2D>();
+            var x = 0;
+            var y = 0;
+            var directions = input[0];
+            visited.Add(new Coord2D(x, y));
+            foreach (var c in directions)
+            {
+                switch (c)
+                {
+                    case '^': y--; break;
+                    case 'v': y++; break;
+                    case '>': x++; break;
+                    case '<': x--; break;
+                }
+
+                visited.Add(new Coord2D(x, y));
+            }
+
+            Console.WriteLine("Day 3, part 1: " + visited.Count);
+        }
+    }
+
+    public class Coord2D
+    {
+        public int X;
+        public int Y;
+        public Coord2D(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public override int GetHashCode()
+        {
+            return X.GetHashCode() ^ Y.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as Coord2D;
+            return other != null && this.X == other.X && this.Y == other.Y;
+        }
+    }
+
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
