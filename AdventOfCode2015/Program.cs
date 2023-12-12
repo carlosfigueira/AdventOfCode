@@ -13,7 +13,8 @@ namespace AdventOfCode2015
         {
             //Day1.Solve();
             //Day2.Solve();
-            Day3.Solve();
+            //Day3.Solve();
+            Day4.Solve();
         }
     }
 
@@ -128,6 +129,27 @@ namespace AdventOfCode2015
             }
 
             Console.WriteLine("Day 3, part 2: " + visited.Count);
+        }
+    }
+
+    class Day4
+    {
+        public static void Solve()
+        {
+            var input = "ckczppom";
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                for (int i = 0; i < 100000000; i++)
+                {
+                    byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input + i);
+                    byte[] hashBytes = md5.ComputeHash(inputBytes);
+                    if (hashBytes[0] == 0 && hashBytes[1] == 0 && (hashBytes[2] & 0xF0) == 0)
+                    {
+                        Console.WriteLine("Day 4, part 1: " + i);
+                        break;
+                    }
+                }
+            }
         }
     }
 
