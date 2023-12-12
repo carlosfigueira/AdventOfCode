@@ -22,7 +22,8 @@ namespace AdventOfCode2023
             // Day8.Solve();
             // Day9.Solve();
             // Day10.Solve();
-            Day11.Solve();
+            // Day11.Solve();
+            Day12.Solve();
         }
     }
 
@@ -1292,6 +1293,124 @@ namespace AdventOfCode2023
         }
     }
 
+    class Day12
+    {
+        class SpringRow
+        {
+            public bool?[] Damaged { get; }
+            public int[] GroupSizes { get; }
+
+            private int _wildcardCount;
+            private string _line;
+
+            public SpringRow(string line, bool?[] damaged, int[] groupSizes)
+            {
+                Damaged = damaged;
+                GroupSizes = groupSizes;
+                _line = line;
+
+                _wildcardCount = damaged.Where(c => c == null).Count();
+            }
+
+            public static SpringRow Parse(string line)
+            {
+                var parts = line.Split(' ');
+                var damaged = parts[0].Select(c => c == '#' ? (bool?)true : c == '.' ? (bool?)false : null).ToArray();
+                var groupSizes = parts[1].Split(',').Select(s => int.Parse(s)).ToArray();
+                return new SpringRow(line, damaged, groupSizes);
+            }
+
+            public int PossibleArrangements()
+            {
+                int max = 1 << _wildcardCount;
+                var bits = new bool[_wildcardCount];
+                var validArrangements = 0;
+                for (int i = 0; i < max; i++)
+                {
+                    for (int j = 0; j < _wildcardCount; j++) bits[j] = (i & (1 << j)) != 0;
+
+                    var inGroup = false;
+                    var groupCount = 0;
+                    var wildcardIndex = 0;
+                    int groupSizesIndex = 0;
+                    var isValidArrangement = true;
+                    for (int j = 0; j < Damaged.Length; j++)
+                    {
+                        if ((Damaged[j].HasValue && Damaged[j].Value) || (!Damaged[j].HasValue && bits[wildcardIndex++]))
+                        {
+                            if (!inGroup)
+                            {
+                                inGroup = true;
+                                if (groupSizesIndex == GroupSizes.Length)
+                                {
+                                    isValidArrangement = false;
+                                    break;
+                                }
+                            }
+
+                            groupCount++;
+                        }
+                        else
+                        {
+                            if (inGroup)
+                            {
+                                inGroup = false;
+                                if (groupCount != GroupSizes[groupSizesIndex++])
+                                {
+                                    isValidArrangement = false;
+                                    break;
+                                }
+
+                                groupCount = 0;
+                            }
+                        }
+                    }
+
+                    if (isValidArrangement)
+                    {
+                        if (groupSizesIndex > GroupSizes.Length)
+                        {
+                            isValidArrangement = false;
+                        }
+                        else if (inGroup && groupCount != GroupSizes[groupSizesIndex++])
+                        {
+                            isValidArrangement = false;
+                        }
+                        else if (groupSizesIndex != GroupSizes.Length)
+                        {
+                            isValidArrangement = false;
+                        }
+                    }
+
+                    if (isValidArrangement)
+                    {
+                        validArrangements++;
+                    }
+                }
+
+                return validArrangements;
+            }
+        }
+
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = useSample ?
+                new[] { "???.### 1,1,3", ".??..??...?##. 1,1,3", "?#?#?#?#?#?#?#? 1,3,1,6", "????.#...#... 4,1,1", "????.######..#####. 1,6,5", "?###???????? 3,2,1" } :
+                Helpers.LoadInput("day12.txt");
+
+            var part1 = 0;
+            foreach (var line in input)
+            {
+                var springRow = SpringRow.Parse(line);
+                var arrangementsForLine = springRow.PossibleArrangements();
+                part1 += arrangementsForLine;
+                //Console.WriteLine($"[debug] {line}: {arrangementsForLine}");
+            }
+
+            Console.WriteLine("Day 12, part 1: " + part1);
+        }
+    }
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
