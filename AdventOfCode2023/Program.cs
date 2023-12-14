@@ -1507,6 +1507,40 @@ namespace AdventOfCode2023
                 return ReflectionLine(TransposedLines);
             }
 
+            public int VerticalSmudgeReflectionLine()
+            {
+                for (int i = 0; i < Lines.Length; i++)
+                {
+                    for (int j = 0; j < Lines[i].Length; j++)
+                    {
+                        var old = Lines[i];
+                        Lines[i] = old.Substring(0, j) + (old[j] == '#' ? '.' : '#') + old.Substring(j + 1);
+                        var temp = ReflectionLine(Lines);
+                        if (temp > 0) return temp;
+                        Lines[i] = old;
+                    }
+                }
+
+                return -1;
+            }
+
+            public int HorizontalSmudgeReflectionLine()
+            {
+                for (int i = 0; i < TransposedLines.Length; i++)
+                {
+                    for (int j = 0; j < TransposedLines[i].Length; j++)
+                    {
+                        var old = TransposedLines[i];
+                        TransposedLines[i] = old.Substring(0, j) + (old[j] == '#' ? '.' : '#') + old.Substring(j + 1);
+                        var temp = ReflectionLine(Lines);
+                        if (temp > 0) return temp;
+                        TransposedLines[i] = old;
+                    }
+                }
+
+                return -1;
+            }
+
             private int ReflectionLine(string[] lines)
             {
                 for (int row = 1; row < lines.Length; row++)
@@ -1538,7 +1572,7 @@ namespace AdventOfCode2023
 
         public static void Solve()
         {
-            var useSample = false;
+            var useSample = true;
             var input = useSample ?
                 new[] { "#.##..##.", "..#.##.#.", "##......#", "##......#", "..#.##.#.", "..##..##.", "#.#.##.#.", "", "#...##..#", "#....#..#", "..##..###", "#####.##.", "#####.##.", "..##..###", "#....#..#" } :
                 Helpers.LoadInput("day13.txt");
@@ -1559,6 +1593,23 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 13, part 1: " + part1);
+
+            // Still incorrect
+            var part2 = 0;
+            foreach (var pattern in patterns)
+            {
+                var horizLine = pattern.VerticalSmudgeReflectionLine();
+                if (horizLine > 0)
+                {
+                    part2 += horizLine * 100;
+                }
+                else
+                {
+                    part2 += pattern.HorizontalSmudgeReflectionLine();
+                }
+            }
+
+            Console.WriteLine("Day 13, part 2: " + part2);
         }
     }
 
