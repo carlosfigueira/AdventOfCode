@@ -23,7 +23,8 @@ namespace AdventOfCode2023
             // Day9.Solve();
             // Day10.Solve();
             // Day11.Solve();
-            Day12.Solve();
+            // Day12.Solve();
+            Day13.Solve();
         }
     }
 
@@ -1312,12 +1313,27 @@ namespace AdventOfCode2023
                 _wildcardCount = damaged.Where(c => c == null).Count();
             }
 
-            public static SpringRow Parse(string line)
+            public static SpringRow Parse(string line, bool unfold = false)
             {
                 var parts = line.Split(' ');
                 var damaged = parts[0].Select(c => c == '#' ? (bool?)true : c == '.' ? (bool?)false : null).ToArray();
                 var groupSizes = parts[1].Split(',').Select(s => int.Parse(s)).ToArray();
-                return new SpringRow(line, damaged, groupSizes);
+                if (!unfold)
+                {
+                    return new SpringRow(line, damaged, groupSizes);
+                }
+                else
+                {
+                    var newDamaged = new bool?[damaged.Length * 5 + 4];
+                    var newGroupSizes = new int[groupSizes.Length * 5];
+                    for (int i = 0; i < 5; i++)
+                    {
+                        Array.Copy(damaged, 0, newDamaged, (damaged.Length + 1) * i, damaged.Length);
+                        Array.Copy(groupSizes, 0, newGroupSizes, groupSizes.Length * i, groupSizes.Length);
+                    }
+
+                    return new SpringRow(line, newDamaged, newGroupSizes);
+                }
             }
 
             public int PossibleArrangements()
@@ -1394,7 +1410,7 @@ namespace AdventOfCode2023
 
         public static void Solve()
         {
-            var useSample = false;
+            var useSample = true;
             var input = useSample ?
                 new[] { "???.### 1,1,3", ".??..??...?##. 1,1,3", "?#?#?#?#?#?#?#? 1,3,1,6", "????.#...#... 4,1,1", "????.######..#####. 1,6,5", "?###???????? 3,2,1" } :
                 Helpers.LoadInput("day12.txt");
@@ -1409,8 +1425,143 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 12, part 1: " + part1);
+
+            var part2 = 0;
+            foreach (var line in input)
+            {
+                var springRow = SpringRow.Parse(line, true);
+                var arrangementsForLine = springRow.PossibleArrangements();
+                part2 += arrangementsForLine;
+                Console.WriteLine($"[debug] {line}: {arrangementsForLine}");
+            }
+
+            Console.WriteLine("Day 12, part 2: " + part2);
         }
     }
+
+    public class Day13
+    {
+        class Pattern
+        {
+            public string[] Lines { get; }
+            public string[] TransposedLines { get; }
+            public int Rows { get; }
+            public int Cols { get; }
+
+            public Pattern(string[] lines)
+            {
+                Lines = lines;
+                Rows = lines.Length;
+                Cols = lines[0].Length;
+                var transposed = new StringBuilder[lines[0].Length];
+                for (var i = 0; i < transposed.Length; i++)
+                {
+                    transposed[i] = new StringBuilder();
+                    for (var j = 0; j < lines.Length; j++)
+                    {
+                        transposed[i].Append(lines[j][i]);
+                    }
+                }
+
+                TransposedLines = transposed.Select(sb => sb.ToString()).ToArray();
+            }
+
+            public static bool TryParse(string[] input, ref int index, out Pattern pattern)
+            {
+                var list = new List<string>();
+                while (index < input.Length && input[index] != "")
+                {
+                    list.Add(input[index++]);
+                }
+
+                if (list.Count > 0)
+                {
+                    pattern = new Pattern(list.ToArray());
+                    return true;
+                }
+
+                pattern = null;
+                return false;
+            }
+
+            public static List<Pattern> ParseInput(string[] input)
+            {
+                var result = new List<Pattern>();
+                var index = 0;
+                while (TryParse(input, ref index, out var pattern))
+                {
+                    result.Add(pattern);
+                    index++;
+                }
+
+                return result;
+            }
+
+            public int VerticalReflectionLine()
+            {
+                return ReflectionLine(Lines);
+            }
+
+            public int HorizontalReflectionLine()
+            {
+                return ReflectionLine(TransposedLines);
+            }
+
+            private int ReflectionLine(string[] lines)
+            {
+                for (int row = 1; row < lines.Length; row++)
+                {
+                    int rowsBefore = row;
+                    int rowsAfter = lines.Length - row;
+                    int toReflect = Math.Min(rowsBefore, rowsAfter);
+                    var isReflection = true;
+                    for (int reflected = 0; reflected < toReflect; reflected++)
+                    {
+                        var left = row - reflected - 1;
+                        var right = row + reflected;
+                        if (lines[left] != lines[right])
+                        {
+                            isReflection = false;
+                            break;
+                        }
+                    }
+
+                    if (isReflection)
+                    {
+                        return row;
+                    }
+                }
+
+                return -1;
+            }
+        }
+
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = useSample ?
+                new[] { "#.##..##.", "..#.##.#.", "##......#", "##......#", "..#.##.#.", "..##..##.", "#.#.##.#.", "", "#...##..#", "#....#..#", "..##..###", "#####.##.", "#####.##.", "..##..###", "#....#..#" } :
+                Helpers.LoadInput("day13.txt");
+
+            var patterns = Pattern.ParseInput(input);
+            var part1 = 0;
+            foreach (var pattern in patterns)
+            {
+                var horizLine = pattern.HorizontalReflectionLine();
+                if (horizLine > 0)
+                {
+                    part1 += horizLine;
+                }
+                else
+                {
+                    part1 += 100 * pattern.VerticalReflectionLine();
+                }
+            }
+
+            Console.WriteLine("Day 13, part 1: " + part1);
+        }
+    }
+
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
