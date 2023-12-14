@@ -24,7 +24,8 @@ namespace AdventOfCode2023
             // Day10.Solve();
             // Day11.Solve();
             // Day12.Solve();
-            Day13.Solve();
+            // Day13.Solve();
+            Day14.Solve();
         }
     }
 
@@ -1610,6 +1611,83 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 13, part 2: " + part2);
+        }
+    }
+
+    class Day14
+    {
+        class Field
+        {
+            public char[][] Cols { get; }
+            public Field(string[] Rows)
+            {
+                Cols = new char[Rows[0].Length][];
+                for (int i = 0; i < Cols.Length; i++)
+                {
+                    Cols[i] = new char[Rows.Length];
+                    for (int j = 0; j < Rows.Length; j++)
+                    {
+                        Cols[i][j] = Rows[j][i];
+                    }
+                }
+            }
+
+            public char[][] TiltNorth()
+            {
+                var result = new char[Cols.Length][];
+                for (int i = 0; i < Cols.Length; i++)
+                {
+                    var col = Cols[i];
+                    result[i] = new char[col.Length];
+                    Array.Copy(col, result[i], col.Length);
+                    var lastPlaceToGo = 0;
+                    for (int j = 0; j < col.Length; j++)
+                    {
+                        switch (col[j])
+                        {
+                            case '.': break;
+                            case '#': lastPlaceToGo = j + 1; break;
+                            case 'O':
+                                if (j != lastPlaceToGo)
+                                {
+                                    if (result[i][lastPlaceToGo] != '.') throw new Exception();
+                                    result[i][j] = '.';
+                                    result[i][lastPlaceToGo] = 'O';
+                                }
+
+                                lastPlaceToGo++;
+                                break;
+                        }
+                    }
+                }
+
+                return result;
+            }
+        }
+
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = useSample ?
+                new[] { "O....#....", "O.OO#....#", ".....##...", "OO.#O....O", ".O.....O#.", "O.#..O.#.#", "..O..#O..O", ".......O..", "#....###..", "#OO..#...." } :
+                Helpers.LoadInput("day14.txt");
+
+            var field = new Field(input);
+            var northTilt = field.TiltNorth();
+            var part1 = 0;
+            for (var col = 0; col < northTilt.Length; col++)
+            {
+                var currentCol = northTilt[col];
+                for (var row = 0; row < currentCol.Length; row++)
+                {
+                    if (currentCol[row] == 'O')
+                    {
+                        part1 += currentCol.Length - row;
+                    }
+                }
+            }
+
+            Console.WriteLine("Day 14, part 1: " + part1);
         }
     }
 
