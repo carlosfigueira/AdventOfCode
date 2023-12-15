@@ -25,7 +25,8 @@ namespace AdventOfCode2023
             // Day11.Solve();
             // Day12.Solve();
             // Day13.Solve();
-            Day14.Solve();
+            // Day14.Solve();
+            Day15.Solve();
         }
     }
 
@@ -1688,6 +1689,107 @@ namespace AdventOfCode2023
             }
 
             Console.WriteLine("Day 14, part 1: " + part1);
+        }
+    }
+
+    class Day15
+    {
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = (useSample ?
+                "rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7" :
+                Helpers.LoadInput("day15.txt")[0]).Split(',');
+
+            var part1 = 0;
+            foreach (var part in input)
+            {
+                part1 += Hash(part);
+            }
+
+            Console.WriteLine("Day 15, part 1: " + part1);
+
+            var part2 = 0L;
+            Regex regex = new Regex(@"(\w+)(\=|\-)(\d+)?");
+            var boxList = Enumerable.Range(0, 256).Select(_ => new List<BoxContent>()).ToArray();
+            foreach (var part in input)
+            {
+                var match = regex.Match(part);
+                var label = match.Groups[1].Value;
+                var operation = match.Groups[2].Value[0];
+                var box = Hash(label);
+                var index = GetIndexInBox(boxList[box], label);
+                switch (operation)
+                {
+                    case '=':
+                        var focalLength = int.Parse(match.Groups[3].Value);
+                        if (index < 0)
+                        {
+                            boxList[box].Add(new BoxContent(label, focalLength));
+                        }
+                        else
+                        {
+                            boxList[box][index].FocalLength = focalLength;
+                        }
+
+                        break;
+                    case '-':
+                        if (index >= 0)
+                        {
+                            boxList[box].RemoveAt(index);
+                        }
+
+                        break;
+                }
+            }
+
+            for (int i = 0; i < boxList.Length; i++)
+            {
+                for (int j = 0; j < boxList[i].Count; j++)
+                {
+                    var focusingPower = (i + 1) * (j + 1) * boxList[i][j].FocalLength;
+                    part2 += focusingPower;
+                }
+            }
+
+            Console.WriteLine("Day 15, part 2: " + part2);
+        }
+
+        static int GetIndexInBox(List<BoxContent> contents, string label)
+        {
+            for (int i = 0; i < contents.Count; i++)
+            {
+                if (contents[i].Label == label)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        class BoxContent
+        {
+            public string Label { get; }
+            public int FocalLength { get; set; }
+            public BoxContent(string label, int focalLength)
+            {
+                Label = label;
+                FocalLength = focalLength;
+            }
+        }
+
+        private static int Hash(string value)
+        {
+            int result = 0;
+            foreach (var c in value)
+            {
+                result += (int)c;
+                result *= 17;
+                result = result % 256;
+            }
+
+            return result;
         }
     }
 
