@@ -14,7 +14,8 @@ namespace AdventOfCode2015
             //Day1.Solve();
             //Day2.Solve();
             //Day3.Solve();
-            Day4.Solve();
+            //Day4.Solve();
+            Day25.Solve();
         }
     }
 
@@ -160,6 +161,45 @@ namespace AdventOfCode2015
                     }
                 }
             }
+        }
+    }
+
+    class Day25
+    {
+        public static void Solve()
+        {
+            int row = 1, col = 1, diag = 1;
+            int initial = 20151125;
+            int finalRow = 2981;
+            int finalCol = 3075;
+            var current = initial;
+            while (row != finalRow || col != finalCol)
+            {
+                if (row == 1)
+                {
+                    // Move to next diagonal
+                    diag++;
+                    row = diag;
+                    col = 1;
+                }
+                else
+                {
+                    row--;
+                    col++;
+                }
+
+                current = GetNext(current);
+            }
+
+            Console.WriteLine("Day 25, part 1: " + current);
+        }
+
+        private static int GetNext(int current)
+        {
+            long result = current;
+            result *= 252533;
+            result = result % 33554393;
+            return (int)result;
         }
     }
 
