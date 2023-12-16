@@ -26,7 +26,8 @@ namespace AdventOfCode2023
             // Day12.Solve();
             // Day13.Solve();
             // Day14.Solve();
-            Day15.Solve();
+            // Day15.Solve();
+            Day16.Solve();
         }
     }
 
@@ -1793,6 +1794,240 @@ namespace AdventOfCode2023
         }
     }
 
+    class Day16
+    {
+        public enum Direction { North, South, East, West }
+
+        public class Coord
+        {
+            public int Row { get; }
+            public int Col { get; }
+            public Coord(int row, int col)
+            {
+                Row = row;
+                Col = col;
+            }
+
+            public override int GetHashCode()
+            {
+                return Row.GetHashCode() ^ Col.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is Coord other
+                    && Row == other.Row
+                    && Col == other.Col;
+            }
+        }
+
+        public class CoordAndDirection
+        {
+            public int Row { get; }
+            public int Col { get; }
+            public Direction Direction { get; }
+            public CoordAndDirection(int row, int col, Direction direction)
+            {
+                Row = row;
+                Col = col;
+                Direction = direction;
+            }
+
+            public override int GetHashCode()
+            {
+                return Row.GetHashCode() ^ Col.GetHashCode() ^ Direction.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is CoordAndDirection other
+                    && Row == other.Row
+                    && Col == other.Col
+                    && Direction == other.Direction;
+            }
+        }
+
+        public static void Solve()
+        {
+            var useSample = false;
+            var input = useSample ?
+                new[] { ".|...\\....", "|.-.\\.....", ".....|-...", "........|.", "..........", ".........\\", "..../.\\\\..", ".-.-/..|..", ".|....-|.\\", "..//.|...." } :
+                Helpers.LoadInput("day16.txt");
+
+            var rowCount = input.Length;
+            var colCount = input[0].Length;
+
+            int part1 = FindEnergizedTiles(input, 0, 0, rowCount, colCount, Direction.East);
+
+            Console.WriteLine("Day 16, part 1: " + part1);
+
+            int part2 = 0;
+            for (int r = 0; r < rowCount; r++)
+            {
+                var temp = FindEnergizedTiles(input, r, 0, rowCount, colCount, Direction.East);
+                if (temp > part2) part2 = temp;
+
+                temp = FindEnergizedTiles(input, r, colCount - 1, rowCount, colCount, Direction.West);
+                if (temp > part2) part2 = temp;
+            }
+
+            for (int c = 0; c < colCount; c++)
+            {
+                var temp = FindEnergizedTiles(input, 0, c, rowCount, colCount, Direction.South);
+                if (temp > part2) part2 = temp;
+
+                temp = FindEnergizedTiles(input, rowCount - 1, c, rowCount, colCount, Direction.North);
+                if (temp > part2) part2 = temp;
+            }
+
+            Console.WriteLine("Day 16, part 2: " + part2);
+        }
+
+        private static int FindEnergizedTiles(string[] input, int initialRow, int initialCol, int rowCount, int colCount, Direction initialDirection)
+        {
+            var queue = new Queue<CoordAndDirection>();
+            queue.Enqueue(new CoordAndDirection(initialRow, initialCol, initialDirection));
+            HashSet<CoordAndDirection> visitedWithDirection = new HashSet<CoordAndDirection>();
+            HashSet<Coord> visited = new HashSet<Coord>();
+            while (queue.Count > 0)
+            {
+                var next = queue.Dequeue();
+                var row = next.Row;
+                var col = next.Col;
+                var dir = next.Direction;
+                visited.Add(new Coord(row, col));
+                visitedWithDirection.Add(new CoordAndDirection(row, col, dir));
+                int nextRow = row, nextCol = col;
+                int? nextRow2 = null, nextCol2 = null;
+                Direction? nextDir2 = null;
+                Direction nextDir = dir;
+                switch (input[row][col])
+                {
+                    case '.':
+                        switch (dir)
+                        {
+                            case Direction.East:
+                                nextCol++;
+                                break;
+                            case Direction.West:
+                                nextCol--;
+                                break;
+                            case Direction.North:
+                                nextRow--;
+                                break;
+                            case Direction.South:
+                                nextRow++;
+                                break;
+                        }
+                        break;
+
+                    case '\\':
+                        switch (dir)
+                        {
+                            case Direction.East:
+                                nextRow++;
+                                nextDir = Direction.South;
+                                break;
+                            case Direction.West:
+                                nextRow--;
+                                nextDir = Direction.North;
+                                break;
+                            case Direction.North:
+                                nextCol--;
+                                nextDir = Direction.West;
+                                break;
+                            case Direction.South:
+                                nextCol++;
+                                nextDir = Direction.East;
+                                break;
+                        }
+                        break;
+
+                    case '/':
+                        switch (dir)
+                        {
+                            case Direction.East:
+                                nextRow--;
+                                nextDir = Direction.North;
+                                break;
+                            case Direction.West:
+                                nextRow++;
+                                nextDir = Direction.South;
+                                break;
+                            case Direction.North:
+                                nextCol++;
+                                nextDir = Direction.East;
+                                break;
+                            case Direction.South:
+                                nextCol--;
+                                nextDir = Direction.West;
+                                break;
+                        }
+                        break;
+
+                    case '-':
+                        switch (dir)
+                        {
+                            case Direction.East:
+                                nextCol++;
+                                break;
+                            case Direction.West:
+                                nextCol--;
+                                break;
+                            case Direction.North:
+                            case Direction.South:
+                                nextCol++;
+                                nextDir = Direction.East;
+                                nextRow2 = row;
+                                nextCol2 = col - 1;
+                                nextDir2 = Direction.West;
+                                break;
+                        }
+                        break;
+
+                    case '|':
+                        switch (dir)
+                        {
+                            case Direction.East:
+                            case Direction.West:
+                                nextRow++;
+                                nextDir = Direction.South;
+                                nextRow2 = row - 1;
+                                nextCol2 = col;
+                                nextDir2 = Direction.North;
+                                break;
+                            case Direction.North:
+                                nextRow--;
+                                break;
+                            case Direction.South:
+                                nextRow++;
+                                break;
+                        }
+                        break;
+                }
+
+                if (0 <= nextRow && nextRow < rowCount && 0 <= nextCol && nextCol < rowCount)
+                {
+                    var toEnqueue = new CoordAndDirection(nextRow, nextCol, nextDir);
+                    if (!visitedWithDirection.Contains(toEnqueue))
+                    {
+                        queue.Enqueue(toEnqueue);
+                    }
+                }
+
+                if (nextRow2.HasValue && 0 <= nextRow2.Value && nextRow2.Value < rowCount && 0 <= nextCol2.Value && nextCol2.Value < colCount)
+                {
+                    var toEnqueue = new CoordAndDirection(nextRow2.Value, nextCol2.Value, nextDir2.Value);
+                    if (!visitedWithDirection.Contains(toEnqueue))
+                    {
+                        queue.Enqueue(toEnqueue);
+                    }
+                }
+            }
+
+            return visited.Count;
+        }
+    }
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
