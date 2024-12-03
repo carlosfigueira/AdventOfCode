@@ -146,13 +146,29 @@
     {
         public static void Solve()
         {
-            var sampleInput = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
+            var sampleInput = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))";
             var useSample = false;
             var input = useSample ? sampleInput : string.Join("", Helpers.LoadInput("day3.txt").Where(l => !string.IsNullOrEmpty(l)));
 
-            int result = 0;
+            int resultPart1 = 0;
+            int resultPart2 = 0;
+            var enabled = true;
             for (int i = 0; i < input.Length; i++)
             {
+                if (i < input.Length - "do()".Length && input[i] == 'd' && input[i + 1] == 'o' && input[i + 2] == '(' && input[i + 3] == ')')
+                {
+                    enabled = true;
+                    i += "do(".Length;
+                    continue;
+                }
+
+                if (i < input.Length - "don't()".Length && input[i] == 'd' && input[i + 1] == 'o' && input[i + 2] == 'n' && input[i + 3] == '\'' && input[i + 4] == 't' && input[i + 5] == '(' && input[i + 6] == ')')
+                {
+                    enabled = false;
+                    i += "do(".Length;
+                    continue;
+                }
+
                 if (input[i] != 'm') continue;
                 i++; if (i >= input.Length || input[i] != 'u') continue;
                 i++; if (i >= input.Length || input[i] != 'l') continue;
@@ -196,10 +212,15 @@
                 }
 
                 if (i >= input.Length || input[i] != ')') continue;
-                result += op1 * op2;
+                resultPart1 += op1 * op2;
+                if (enabled)
+                {
+                    resultPart2 += op1 * op2;
+                }
             }
 
-            Console.WriteLine(result);
+            Console.WriteLine(resultPart1);
+            Console.WriteLine(resultPart2);
         }
     }
     public class Helpers
