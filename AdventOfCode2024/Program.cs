@@ -5,7 +5,8 @@
         static void Main(string[] args)
         {
             //Day1.Solve();
-            Day2.Solve();
+            //Day2.Solve();
+            Day3.Solve();
         }
     }
 
@@ -141,6 +142,66 @@
         }
     }
 
+    class Day3
+    {
+        public static void Solve()
+        {
+            var sampleInput = "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
+            var useSample = false;
+            var input = useSample ? sampleInput : string.Join("", Helpers.LoadInput("day3.txt").Where(l => !string.IsNullOrEmpty(l)));
+
+            int result = 0;
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (input[i] != 'm') continue;
+                i++; if (i >= input.Length || input[i] != 'u') continue;
+                i++; if (i >= input.Length || input[i] != 'l') continue;
+                i++; if (i >= input.Length || input[i] != '(') continue;
+                i++; if (i >= input.Length) continue;
+                if (!char.IsAsciiDigit(input[i])) continue;
+                var op1 = input[i] - '0';
+                var op1Start = i;
+                var invalid = false;
+                i++;
+                while (i < input.Length && char.IsAsciiDigit(input[i]))
+                {
+                    op1 *= 10;
+                    op1 += input[i] - '0';
+                    i++;
+                    if (i - op1Start > 3)
+                    {
+                        invalid = true;
+                        break;
+                    }
+                }
+
+                if (invalid) continue;
+                if (i >= input.Length || input[i] != ',') continue;
+                i++; if (i >= input.Length) continue;
+                if (!char.IsAsciiDigit(input[i])) continue;
+                var op2 = input[i] - '0';
+                var op2Start = i;
+                invalid = false;
+                i++;
+                while (i < input.Length && char.IsAsciiDigit(input[i]))
+                {
+                    op2 *= 10;
+                    op2 += input[i] - '0';
+                    i++;
+                    if (i - op2Start > 3)
+                    {
+                        invalid = true;
+                        break;
+                    }
+                }
+
+                if (i >= input.Length || input[i] != ')') continue;
+                result += op1 * op2;
+            }
+
+            Console.WriteLine(result);
+        }
+    }
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
