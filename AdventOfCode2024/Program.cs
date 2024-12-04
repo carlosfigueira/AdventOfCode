@@ -6,7 +6,8 @@
         {
             //Day1.Solve();
             //Day2.Solve();
-            Day3.Solve();
+            //Day3.Solve();
+            Day4.Solve();
         }
     }
 
@@ -223,6 +224,142 @@
             Console.WriteLine(resultPart2);
         }
     }
+
+    class Day4
+    {
+        const int PadSize = 4;
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "MMMSXXMASM",
+                "MSAMXMSMSA",
+                "AMXSXMAAMM",
+                "MSAMASMSMX",
+                "XMASAMXAMM",
+                "XXAMMXXAMA",
+                "SMSMSASXSS",
+                "SAXAMASAAA",
+                "MAMMMXMMMM",
+                "MXMXAXMASX"
+            };
+
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day4.txt");
+            var topBottomPadding = Enumerable.Range(0, PadSize).Select(_ => new string('.', lines[0].Length));
+            lines = topBottomPadding.Concat(lines).Concat(topBottomPadding).ToArray();
+            lines = lines.Select(l => new string('.', PadSize) + l + new string('.', PadSize)).ToArray();
+
+            var result = 0;
+            int rows = lines.Length;
+            int cols = lines[0].Length;
+            for (int row = PadSize; row < rows - PadSize; row++)
+            {
+                for (int col = PadSize; col < cols - PadSize; col++)
+                {
+                    if (lines[row][col] == 'X')
+                    {
+                        // Horizontal, left-to-right
+                        if (Check(lines, row, col, 0, 1)) result++;
+                        // Horizontal, right-to-left
+                        if (Check(lines, row, col, 0, -1)) result++;
+                        // Vertical, top-to-bottom
+                        if (Check(lines, row, col, 1, 0)) result++;
+                        // Vertical, bottom-to-top
+                        if (Check(lines, row, col, -1, 0)) result++;
+                        // Diagonal, topleft-to-bottomright
+                        if (Check(lines, row, col, 1, 1)) result++;
+                        // Diagonal, bottomeft-to-topright
+                        if (Check(lines, row, col, -1, 1)) result++;
+                        // Diagonal, topright-to-bottomleft
+                        if (Check(lines, row, col, 1, -1)) result++;
+                        // Diagonal, bottomright-to-topleft
+                        if (Check(lines, row, col, -1, -1)) result++;
+                    }
+                }
+            }
+
+            Console.WriteLine(result);
+
+            result = 0;
+            for (int row = PadSize; row < rows - PadSize; row++)
+            {
+                for (int col = PadSize; col < cols - PadSize; col++)
+                {
+                    if (lines[row][col] == 'A')
+                    {
+                        // M's to the left
+                        if (Check2(lines, row, col, mDirection: Direction.Left)) result++;
+                        // M's to the right
+                        if (Check2(lines, row, col, mDirection: Direction.Right)) result++;
+                        // M's to the top
+                        if (Check2(lines, row, col, mDirection: Direction.Top)) result++;
+                        // M's to the bottom
+                        if (Check2(lines, row, col, mDirection: Direction.Bottom)) result++;
+                    }
+                }
+            }
+
+            Console.WriteLine(result);
+        }
+
+        static bool Check(string[] lines, int row, int col, int rowDirection, int colDirection)
+        {
+            var result =
+                lines[row + 1 * rowDirection][col + 1 * colDirection] == 'M' &&
+                lines[row + 2 * rowDirection][col + 2 * colDirection] == 'A' &&
+                lines[row + 3 * rowDirection][col + 3 * colDirection] == 'S';
+            //if (result)
+            //{
+            //    Console.WriteLine($"{DirectionFromDeltas(rowDirection, colDirection)}, from ({row - PadSize},{col - PadSize})");
+            //}
+            return result;
+        }
+
+        enum Direction { Left, Right, Top, Bottom }
+        static bool Check2(string[] lines, int row, int col, Direction mDirection)
+        {
+            switch (mDirection)
+            {
+                case Direction.Left:
+                    return lines[row - 1][col - 1] == 'M' &&
+                        lines[row + 1][col - 1] == 'M' &&
+                        lines[row - 1][col + 1] == 'S' &&
+                        lines[row + 1][col + 1] == 'S';
+                case Direction.Right:
+                    return lines[row - 1][col + 1] == 'M' &&
+                        lines[row + 1][col + 1] == 'M' &&
+                        lines[row - 1][col - 1] == 'S' &&
+                        lines[row + 1][col - 1] == 'S';
+                case Direction.Top:
+                    return lines[row - 1][col - 1] == 'M' &&
+                        lines[row - 1][col + 1] == 'M' &&
+                        lines[row + 1][col - 1] == 'S' &&
+                        lines[row + 1][col + 1] == 'S';
+                case Direction.Bottom:
+                    return lines[row + 1][col - 1] == 'M' &&
+                        lines[row + 1][col + 1] == 'M' &&
+                        lines[row - 1][col - 1] == 'S' &&
+                        lines[row - 1][col + 1] == 'S';
+            }
+
+            return false;
+        }
+
+        static string DirectionFromDeltas(int rowDelta, int colDelta)
+        {
+            if (rowDelta == 1 && colDelta == 0) return "top-to-bottom";
+            if (rowDelta == -1 && colDelta == 0) return "bottom-to-top";
+            if (rowDelta == 0 && colDelta == 1) return "left-to-right";
+            if (rowDelta == 0 && colDelta == -1) return "right-to-left";
+            if (rowDelta == 1 && colDelta == 1) return "topleft-to-bottomright";
+            if (rowDelta == 1 && colDelta == -1) return "topright-to-bottomleft";
+            if (rowDelta == -1 && colDelta == 1) return "bottomleft-to-topright";
+            if (rowDelta == -1 && colDelta == -1) return "bottomright-to-topleft";
+            return "unknown";
+        }
+    }
+
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
