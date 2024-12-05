@@ -7,7 +7,8 @@
             //Day1.Solve();
             //Day2.Solve();
             //Day3.Solve();
-            Day4.Solve();
+            //Day4.Solve();
+            Day5.Solve();
         }
     }
 
@@ -357,6 +358,110 @@
             if (rowDelta == -1 && colDelta == 1) return "bottomleft-to-topright";
             if (rowDelta == -1 && colDelta == -1) return "bottomright-to-topleft";
             return "unknown";
+        }
+    }
+
+    class Day5
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "47|53",
+                "97|13",
+                "97|61",
+                "97|47",
+                "75|29",
+                "61|13",
+                "75|53",
+                "29|13",
+                "97|29",
+                "53|29",
+                "61|53",
+                "97|53",
+                "61|29",
+                "47|13",
+                "75|47",
+                "97|75",
+                "47|61",
+                "75|61",
+                "47|29",
+                "75|13",
+                "53|13",
+                "",
+                "75,47,61,53,29",
+                "97,61,53,29,13",
+                "75,29,13",
+                "75,97,47,61,53",
+                "61,13,29",
+                "97,13,75,29,47"
+            };
+
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day5.txt");
+            var mustBeBefore = new Dictionary<int, HashSet<int>>();
+            var orderPairs = new List<Tuple<int, int>>();
+            var i = 0;
+            for (; i < lines.Length; i++)
+            {
+                if (string.IsNullOrEmpty(lines[i]))
+                {
+                    // End of first part of input
+                    i++;
+                    break;
+                }
+
+                var values = lines[i].Split('|').Select(v => int.Parse(v)).ToArray();
+                var before = values[0];
+                var after = values[1];
+                orderPairs.Add(Tuple.Create(before, after));
+                if (mustBeBefore.TryGetValue(before, out var afters))
+                {
+                    afters.Add(after);
+                }
+                else
+                {
+                    mustBeBefore.Add(before, new HashSet<int> { after });
+                }
+            }
+
+            var tests = new List<int[]>();
+            for (; i < lines.Length; i++)
+            {
+                tests.Add(lines[i].Split(',').Select(n => int.Parse(n)).ToArray());
+            }
+
+            var part1Result = 0;
+            foreach (var test in tests)
+            {
+                if (IsValidPart1(test, mustBeBefore))
+                {
+                    part1Result += GetMiddleValue(test);
+                }
+            }
+
+            Console.WriteLine(part1Result);
+        }
+
+        static int GetMiddleValue(int[] pages)
+        {
+            return pages[pages.Length / 2];
+        }
+
+        static bool IsValidPart1(int[] pages, Dictionary<int, HashSet<int>> orderingRules)
+        {
+            for (int i = 1; i < pages.Length; i++)
+            {
+                var after = pages[i];
+                if (!orderingRules.ContainsKey(after)) continue;
+                for (int j = 0; j < i; j++)
+                {
+                    var before = pages[j];
+                    if (orderingRules[after].Contains(before)) return false;
+                }
+            }
+
+            return true;
         }
     }
 
