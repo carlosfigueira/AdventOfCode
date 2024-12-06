@@ -441,6 +441,17 @@
             }
 
             Console.WriteLine(part1Result);
+
+            var part2Result = 0;
+            foreach (var test in tests)
+            {
+                if (IsValidPart2(test, mustBeBefore, out var middleValue))
+                {
+                    part2Result += middleValue;
+                }
+            }
+
+            Console.WriteLine(part2Result);
         }
 
         static int GetMiddleValue(int[] pages)
@@ -462,6 +473,49 @@
             }
 
             return true;
+        }
+
+        static bool IsValidPart2(int[] pages, Dictionary<int, HashSet<int>> orderingRules, out int middleNumber)
+        {
+            var trimmedRules = new Dictionary<int, HashSet<int>>();
+            foreach (var before in orderingRules.Keys)
+            {
+                if (!pages.Contains(before)) continue;
+                var after = orderingRules[before].Where(n => pages.Contains(n)).ToArray();
+                if (after.Length == 0) continue;
+                trimmedRules.Add(before, new HashSet<int>(after));
+            }
+
+            var changed = false;
+            for (int i = 0; i < pages.Length - 1; i++)
+            {
+                var changeMade = false;
+                for (int j = i + 1; j < pages.Length; j++)
+                {
+                    if (trimmedRules.TryGetValue(pages[j], out var afters) && afters.Contains(pages[i]))
+                    {
+                        changed = true;
+                        changeMade = true;
+                        var temp = pages[i]; pages[i] = pages[j]; pages[j] = temp;
+                        break;
+                    }
+                }
+
+                if (changeMade)
+                {
+                    // Try again
+                    i--;
+                    continue;
+                }
+            }
+
+            middleNumber = 0;
+            if (changed)
+            {
+                middleNumber = GetMiddleValue(pages);
+            }
+
+            return changed;
         }
     }
 
