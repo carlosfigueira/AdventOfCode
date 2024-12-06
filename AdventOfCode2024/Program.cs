@@ -8,7 +8,8 @@
             //Day2.Solve();
             //Day3.Solve();
             //Day4.Solve();
-            Day5.Solve();
+            //Day5.Solve();
+            Day6.Solve();
         }
     }
 
@@ -519,6 +520,142 @@
         }
     }
 
+    class Day6
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "....#.....",
+                ".........#",
+                "..........",
+                "..#.......",
+                ".......#..",
+                "..........",
+                ".#..^.....",
+                "........#.",
+                "#.........",
+                "......#..."
+            };
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day6.txt");
+            int row = -1, col = -1;
+            char direction = '^';
+            for (var r = 0; r < lines.Length; r++)
+            {
+                for (var c = 0; c < lines[r].Length; c++)
+                {
+                    if (lines[r][c] == '^')
+                    {
+                        row = r;
+                        col = c;
+                        break;
+                    }
+                }
+
+                if (row >= 0) break;
+            }
+
+            var visited = new HashSet<int>();
+            visited.Add(CoordsToValue(row, col));
+            var endOfMap = false;
+            while (!endOfMap)
+            {
+                if (TryMove(lines, ref row, ref col, ref direction, ref endOfMap))
+                {
+                    visited.Add(CoordsToValue(row, col));
+                }
+            }
+
+            Console.WriteLine(visited.Count);
+        }
+
+        static int CoordsToValue(int row, int col)
+        {
+            return row * 1000 + col;
+        }
+
+        static char ChangeDirection(char direction)
+        {
+            switch (direction)
+            {
+                case '^': return '>';
+                case '>': return 'v';
+                case 'v': return '<';
+                default: return '^';
+            }
+        }
+
+        static bool TryMove(string[] map, ref int row, ref int col, ref char direction, ref bool endOfMap)
+        {
+            endOfMap = false;
+            switch (direction)
+            {
+                case '^':
+                    if (row == 0)
+                    {
+                        endOfMap = true;
+                        return false;
+                    }
+
+                    if (map[row - 1][col] == '#')
+                    {
+                        direction = ChangeDirection(direction);
+                        return false;
+                    }
+
+                    row--;
+                    return true;
+                case 'v':
+                    if (row == map.Length - 1)
+                    {
+                        endOfMap = true;
+                        return false;
+                    }
+
+                    if (map[row + 1][col] == '#')
+                    {
+                        direction = ChangeDirection(direction);
+                        return false;
+                    }
+
+                    row++;
+                    return true;
+                case '<':
+                    if (col == 0)
+                    {
+                        endOfMap = true;
+                        return false;
+                    }
+
+                    if (map[row][col - 1] == '#')
+                    {
+                        direction = ChangeDirection(direction);
+                        return false;
+                    }
+
+                    col--;
+                    return true;
+                case '>':
+                    if (col == map[0].Length - 1)
+                    {
+                        endOfMap = true;
+                        return false;
+                    }
+
+                    if (map[row][col + 1] == '#')
+                    {
+                        direction = ChangeDirection(direction);
+                        return false;
+                    }
+
+                    col++;
+                    return true;
+            }
+
+            return false;
+        }
+    }
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
