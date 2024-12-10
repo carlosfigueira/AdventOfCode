@@ -731,11 +731,22 @@ namespace AdventOfCode2024
             }
 
             var antiNodes = new HashSet<Coord>();
-            void addIfValid(Coord coord)
+            bool isValid(Coord coord)
             {
-                if (coord.Row >= 0 && coord.Col >= 0 && coord.Row < rows && coord.Col < cols && !antiNodes.Contains(coord))
+                return coord.Row >= 0 && coord.Col >= 0 && coord.Row < rows && coord.Col < cols;
+            }
+            void add(Coord coord)
+            {
+                if (!antiNodes.Contains(coord))
                 {
                     antiNodes.Add(coord);
+                }
+            }
+            void addIfValid(Coord coord)
+            {
+                if (isValid(coord))
+                {
+                    add(coord);
                 }
             }
 
@@ -751,6 +762,35 @@ namespace AdventOfCode2024
                         var secondAntiNode = antennas[i].Add(dist, -1);
                         addIfValid(firstAntiNode);
                         addIfValid(secondAntiNode);
+                    }
+                }
+            }
+
+            Console.WriteLine(antiNodes.Count);
+
+            antiNodes.Clear();
+            foreach (var type in types.Keys)
+            {
+                var antennas = types[type];
+                for (var i = 0; i < antennas.Count; i++)
+                {
+                    add(antennas[i]);
+                    for (var j = i + 1; j < antennas.Count; j++)
+                    {
+                        var dist = antennas[i].Distance(antennas[j]);
+                        for (var k = 1; k < 100; k++)
+                        {
+                            var possibleAntiNode = antennas[j].Add(dist, k);
+                            if (!isValid(possibleAntiNode)) break;
+                            add(possibleAntiNode);
+                        }
+
+                        for (var k = 1; k < 100; k++)
+                        {
+                            var possibleAntiNode = antennas[i].Add(dist, -k);
+                            if (!isValid(possibleAntiNode)) break;
+                            add(possibleAntiNode);
+                        }
                     }
                 }
             }
