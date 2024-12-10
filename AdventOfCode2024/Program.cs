@@ -12,7 +12,8 @@ namespace AdventOfCode2024
             //Day4.Solve();
             //Day5.Solve();
             //Day6.Solve();
-            Day8.Solve();
+            Day7.Solve();
+            //Day8.Solve();
             //Day9.Solve();
         }
     }
@@ -658,6 +659,94 @@ namespace AdventOfCode2024
             }
 
             return false;
+        }
+    }
+
+    class Day7
+    {
+        class LineInput
+        {
+            public long TestValue { get; set; }
+            public long[] Operands { get; set; }
+
+            public static LineInput Parse(string line)
+            {
+                var parts = line.Split(':');
+                var testValue = long.Parse(parts[0].Trim());
+                var operands = parts[1].Trim().Split(' ').Select(n => long.Parse(n)).ToArray();
+                return new LineInput { TestValue = testValue, Operands = operands };
+            }
+        }
+
+        static bool[] ToBitArray(long l, int size)
+        {
+            var result = new bool[size];
+            for (var i = 0; i < size; i++)
+            {
+                if ((l & 1) != 0)
+                {
+                    result[i] = true;
+                }
+
+                l /= 2;
+            }
+
+            return result;
+        }
+
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "190: 10 19",
+                "3267: 81 40 27",
+                "83: 17 5",
+                "156: 15 6",
+                "7290: 6 8 6 15",
+                "161011: 16 10 13",
+                "192: 17 8 14",
+                "21037: 9 7 18 13",
+                "292: 11 6 16 20"
+            };
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day7.txt");
+            var inputs = lines.Select(l => LineInput.Parse(l)).ToArray();
+
+            long totalCalibration = 0;
+            foreach (var input in inputs)
+            {
+                var operatorCount = input.Operands.Length - 1;
+                var totalPossibleOperators = 1 << operatorCount;
+                for (var possibleOperators = 0; possibleOperators < totalPossibleOperators; possibleOperators++)
+                {
+                    long currentValue = input.Operands[0];
+                    var operations = ToBitArray(possibleOperators, operatorCount);
+                    for (var i = 0; i < operations.Length; i++)
+                    {
+                        if (operations[i])
+                        {
+                            currentValue += input.Operands[i + 1];
+                        }
+                        else
+                        {
+                            currentValue *= input.Operands[i + 1];
+                        }
+
+                        if (currentValue > input.TestValue)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (currentValue == input.TestValue)
+                    {
+                        totalCalibration += input.TestValue;
+                        break;
+                    }
+                }
+            }
+
+            Console.WriteLine(totalCalibration);
         }
     }
 
