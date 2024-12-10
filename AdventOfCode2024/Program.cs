@@ -9,7 +9,8 @@
             //Day3.Solve();
             //Day4.Solve();
             //Day5.Solve();
-            Day6.Solve();
+            //Day6.Solve();
+            Day9.Solve();
         }
     }
 
@@ -656,6 +657,50 @@
             return false;
         }
     }
+
+    class Day9
+    {
+        public static void Solve()
+        {
+            var sampleInput = "2333133121414131402";
+            var useSample = false;
+            var input = useSample ? sampleInput : Helpers.LoadInput("day9.txt")[0];
+
+            var list = new List<int>();
+            var id = 0;
+            for (var i = 0; i < input.Length; i += 2)
+            {
+                var fileBlocks = input[i] - '0';
+                var freeBlocks = i + 1 < input.Length ? input[i + 1] - '0' : 0;
+                for (var j = 0; j < fileBlocks; j++) list.Add(id);
+                for (var j = 0; j < freeBlocks; j++) list.Add(-1);
+                id++;
+            }
+
+            int left = 0; int right = list.Count - 1;
+            while (left < list.Count && list[left] >= 0) left++;
+            while (right >= 0 && list[right] < 0) right--;
+
+            while (left < right)
+            {
+                var temp = list[left]; list[left] = list[right]; list[right] = temp;
+                left++;
+                while (left < list.Count && list[left] >= 0) left++;
+                right--;
+                while (right >= 0 && list[right] < 0) right--;
+            }
+
+            var checksum = 0L;
+            for (var i = 0; i < list.Count; i++)
+            {
+                if (list[i] < 0) break;
+                checksum += list[i] * i;
+            }
+
+            Console.WriteLine(checksum);
+        }
+    }
+
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
