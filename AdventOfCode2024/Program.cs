@@ -694,6 +694,18 @@ namespace AdventOfCode2024
             return result;
         }
 
+        static int[] ToNAry(long l, int baseN, int size)
+        {
+            var result = new int[size];
+            for (var i = 0; i < size; i++)
+            {
+                result[i] = (int)(l % baseN);
+                l /= baseN;
+            }
+
+            return result;
+        }
+
         public static void Solve()
         {
             var sampleInput = new[]
@@ -720,16 +732,57 @@ namespace AdventOfCode2024
                 for (var possibleOperators = 0; possibleOperators < totalPossibleOperators; possibleOperators++)
                 {
                     long currentValue = input.Operands[0];
-                    var operations = ToBitArray(possibleOperators, operatorCount);
+                    var operations = ToNAry(possibleOperators, 2, operatorCount);
                     for (var i = 0; i < operations.Length; i++)
                     {
-                        if (operations[i])
+                        if (operations[i] == 0)
                         {
                             currentValue += input.Operands[i + 1];
                         }
                         else
                         {
                             currentValue *= input.Operands[i + 1];
+                        }
+
+                        if (currentValue > input.TestValue)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (currentValue == input.TestValue)
+                    {
+                        totalCalibration += input.TestValue;
+                        break;
+                    }
+                }
+            }
+
+            Console.WriteLine(totalCalibration);
+
+            totalCalibration = 0;
+            foreach (var input in inputs)
+            {
+                var operatorCount = input.Operands.Length - 1;
+                var totalPossibleOperators = 1;
+                for (var i = 0; i < operatorCount; i++) totalPossibleOperators *= 3;
+                for (var possibleOperators = 0; possibleOperators < totalPossibleOperators; possibleOperators++)
+                {
+                    long currentValue = input.Operands[0];
+                    var operations = ToNAry(possibleOperators, 3, operatorCount);
+                    for (var i = 0; i < operations.Length; i++)
+                    {
+                        if (operations[i] == 0)
+                        {
+                            currentValue += input.Operands[i + 1];
+                        }
+                        else if (operations[i] == 1)
+                        {
+                            currentValue *= input.Operands[i + 1];
+                        }
+                        else
+                        {
+                            currentValue = long.Parse(currentValue.ToString() + input.Operands[i + 1].ToString());
                         }
 
                         if (currentValue > input.TestValue)
