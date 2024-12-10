@@ -1,4 +1,6 @@
-﻿namespace AdventOfCode2024
+﻿using System.Diagnostics;
+
+namespace AdventOfCode2024
 {
     internal class Program
     {
@@ -10,7 +12,8 @@
             //Day4.Solve();
             //Day5.Solve();
             //Day6.Solve();
-            Day9.Solve();
+            Day8.Solve();
+            //Day9.Solve();
         }
     }
 
@@ -658,12 +661,110 @@
         }
     }
 
+    class Day8
+    {
+        [DebuggerDisplay("{Row},{Col}")]
+        class Coord
+        {
+            public int Row { get; set; }
+            public int Col { get; set; }
+
+            public override int GetHashCode()
+            {
+                return this.Row * 100 + this.Col;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                return obj is Coord other && this.Row == other.Row && this.Col == other.Col;
+            }
+
+            public Coord Distance(Coord other)
+            {
+                return new Coord { Row = other.Row - this.Row, Col = other.Col - this.Col };
+            }
+
+            public Coord Add(Coord other, int multiplier)
+            {
+                return new Coord { Row = this.Row + other.Row * multiplier, Col = this.Col + other.Col * multiplier };
+            }
+        }
+
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "............",
+                "........0...",
+                ".....0......",
+                ".......0....",
+                "....0.......",
+                "......A.....",
+                "............",
+                "............",
+                "........A...",
+                ".........A..",
+                "............",
+                "............"
+            };
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day8.txt");
+
+            var types = new Dictionary<char, List<Coord>>();
+            var rows = lines.Length;
+            var cols = lines[0].Length;
+            for (var row = 0; row < rows; row++)
+            {
+                for (var col = 0; col < cols; col++)
+                {
+                    var type = lines[row][col];
+                    if (type == '.') continue;
+                    if (types.TryGetValue(type, out var positions))
+                    {
+                        positions.Add(new Coord { Row = row, Col = col });
+                    }
+                    else
+                    {
+                        types.Add(type, new List<Coord> { new Coord { Row = row, Col = col } });
+                    }
+                }
+            }
+
+            var antiNodes = new HashSet<Coord>();
+            void addIfValid(Coord coord)
+            {
+                if (coord.Row >= 0 && coord.Col >= 0 && coord.Row < rows && coord.Col < cols && !antiNodes.Contains(coord))
+                {
+                    antiNodes.Add(coord);
+                }
+            }
+
+            foreach (var type in types.Keys)
+            {
+                var antennas = types[type];
+                for (var i = 0; i < antennas.Count - 1; i++)
+                {
+                    for (var j = i + 1; j < antennas.Count; j++)
+                    {
+                        var dist = antennas[i].Distance(antennas[j]);
+                        var firstAntiNode = antennas[j].Add(dist, 1);
+                        var secondAntiNode = antennas[i].Add(dist, -1);
+                        addIfValid(firstAntiNode);
+                        addIfValid(secondAntiNode);
+                    }
+                }
+            }
+
+            Console.WriteLine(antiNodes.Count);
+        }
+    }
+
     class Day9
     {
         public static void Solve()
         {
             var sampleInput = "2333133121414131402";
-            var useSample = false;
+            var useSample = true;
             var input = useSample ? sampleInput : Helpers.LoadInput("day9.txt")[0];
 
             var list = new List<int>();
