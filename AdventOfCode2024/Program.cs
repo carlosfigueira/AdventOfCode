@@ -12,9 +12,10 @@ namespace AdventOfCode2024
             //Day4.Solve();
             //Day5.Solve();
             //Day6.Solve();
-            Day7.Solve();
+            //Day7.Solve();
             //Day8.Solve();
             //Day9.Solve();
+            Day10.Solve();
         }
     }
 
@@ -981,6 +982,85 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(checksum);
+        }
+    }
+
+    class Day10
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "89010123",
+                "78121874",
+                "87430965",
+                "96549874",
+                "45678903",
+                "32019012",
+                "01329801",
+                "10456732"
+            };
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day10.txt");
+
+            var totalScore = 0;
+            for (var r = 0; r < lines.Length; r++)
+            {
+                for (var c = 0; c < lines[r].Length; c++)
+                {
+                    if (lines[r][c] == '0')
+                    {
+                        totalScore += CalculateTrailheadScore(lines, r, c);
+                    }
+                }
+            }
+
+            Console.WriteLine(totalScore);
+        }
+
+        static int CalculateTrailheadScore(string[] map, int startRow, int startCol)
+        {
+            var result = 0;
+            var rows = map.Length;
+            var cols = map[0].Length;
+            var endPoints = new bool[rows, cols];
+            var queue = new Queue<(int, int)>();
+
+            queue.Enqueue((startRow, startCol));
+            //visited[startRow, startCol] = true;
+            var rowDirections = new[] { -1, 1, 0, 0 };
+            var colDirections = new[] { 0, 0, -1, 1 };
+            while (queue.Count > 0)
+            {
+                (int row, int col) = queue.Dequeue();
+                for (var i = 0; i < 4; i++)
+                {
+                    int nextRow = row + rowDirections[i];
+                    if (nextRow < 0 || nextRow >= rows) continue;
+                    int nextCol = col + colDirections[i];
+                    if (nextCol < 0 || nextCol >= cols) continue;
+                    //if (visited[nextRow, nextCol]) continue;
+                    //visited[nextRow, nextCol] = true;
+                    if (map[row][col] + 1 == map[nextRow][nextCol])
+                    {
+                        if (map[nextRow][nextCol] == '9')
+                        {
+                            if (!endPoints[nextRow, nextCol])
+                            {
+                                result++;
+                            }
+
+                            endPoints[nextRow, nextCol] = true;
+                        }
+                        else
+                        {
+                            queue.Enqueue((nextRow, nextCol));
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
     }
 
