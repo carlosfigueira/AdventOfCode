@@ -15,7 +15,8 @@ namespace AdventOfCode2024
             //Day7.Solve();
             //Day8.Solve();
             //Day9.Solve();
-            Day10.Solve();
+            //Day10.Solve();
+            Day11.Solve();
         }
     }
 
@@ -1110,6 +1111,126 @@ namespace AdventOfCode2024
             return result;
         }
     }
+
+    class Day11
+    {
+        class PartialResult
+        {
+            public string Value { get; set; }
+            public int RoundsLeft { get; set; }
+            public override bool Equals(object? obj)
+            {
+                return obj is PartialResult other && this.Value == other.Value && this.RoundsLeft == other.RoundsLeft;
+            }
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(this.Value, this.RoundsLeft);
+            }
+        }
+
+        public static void Solve()
+        {
+            var sampleInput = "125 17";
+            var useSample = false;
+            var input = useSample ? sampleInput : Helpers.LoadInput("day11.txt")[0].Trim();
+
+            Dictionary<(string, int), long> partialResultsCache = new Dictionary<(string, int), long>();
+            var parts = input.Split(' ');
+            var rounds = 25;
+            long result = 0;
+            foreach (var part in parts)
+            {
+                result += CountStonesAfter(partialResultsCache, part, rounds);
+            }
+
+            Console.WriteLine(result);
+
+            rounds = 75;
+            result = 0;
+            foreach (var part in parts)
+            {
+                result += CountStonesAfter(partialResultsCache, part, rounds);
+            }
+
+            Console.WriteLine(result);
+        }
+
+        static long CountStonesAfter(Dictionary<(string, int), long> partialResultsCache, string stone, int blinksLeft)
+        {
+            if (blinksLeft == 0) return 1;
+            if (partialResultsCache.TryGetValue((stone, blinksLeft), out var cachedResult))
+            {
+                return cachedResult;
+            }
+
+            if (stone == "0")
+            {
+                if (blinksLeft == 1)
+                {
+                    partialResultsCache[(stone, 1)] = 1;
+                    return 1;
+                }
+
+                var result = CountStonesAfter(partialResultsCache, "1", blinksLeft - 1);
+                partialResultsCache.Add((stone, blinksLeft), result);
+                return result;
+            }
+            else if ((stone.Length % 2) == 0)
+            {
+                var part1 = stone.Substring(0, stone.Length / 2).TrimStart('0');
+                if (part1.Length == 0) part1 = "0";
+                var part2 = stone.Substring(stone.Length / 2).TrimStart('0');
+                if (part2.Length == 0) part2 = "0";
+                if (blinksLeft == 1)
+                {
+                    partialResultsCache[(stone, 1)] = 2;
+                    return 2;
+                }
+
+                long result1, result2;
+                if (partialResultsCache.TryGetValue((part1, blinksLeft - 1), out var resultPart1))
+                {
+                    result1 = resultPart1;
+                }
+                else
+                {
+                    result1 = CountStonesAfter(partialResultsCache, part1, blinksLeft - 1);
+                }
+
+                if (partialResultsCache.TryGetValue((part2, blinksLeft - 1), out var resultPart2))
+                {
+                    result2 = resultPart2;
+                }
+                else
+                {
+                    result2 = CountStonesAfter(partialResultsCache, part2, blinksLeft - 1);
+                }
+
+                var result = result1 + result2;
+                partialResultsCache.Add((stone, blinksLeft), result);
+                return result;
+            }
+            else
+            {
+                if (blinksLeft == 1)
+                {
+                    partialResultsCache[(stone, 1)] = 1;
+                    return 1;
+                }
+
+                var newStone = (long.Parse(stone) * 2024).ToString();
+                if (partialResultsCache.TryGetValue((newStone, blinksLeft - 1), out var result))
+                {
+                    return result;
+                }
+
+                result = CountStonesAfter(partialResultsCache, newStone, blinksLeft - 1);
+                partialResultsCache.Add((stone, blinksLeft), result);
+                return result;
+            }
+        }
+    }
+
 
     public class Helpers
     {
