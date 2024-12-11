@@ -1016,6 +1016,20 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(totalScore);
+
+            totalScore = 0;
+            for (var r = 0; r < lines.Length; r++)
+            {
+                for (var c = 0; c < lines[r].Length; c++)
+                {
+                    if (lines[r][c] == '0')
+                    {
+                        totalScore += CalculateTrailheadScorePart2(lines, r, c);
+                    }
+                }
+            }
+
+            Console.WriteLine(totalScore);
         }
 
         static int CalculateTrailheadScore(string[] map, int startRow, int startCol)
@@ -1027,7 +1041,6 @@ namespace AdventOfCode2024
             var queue = new Queue<(int, int)>();
 
             queue.Enqueue((startRow, startCol));
-            //visited[startRow, startCol] = true;
             var rowDirections = new[] { -1, 1, 0, 0 };
             var colDirections = new[] { 0, 0, -1, 1 };
             while (queue.Count > 0)
@@ -1039,8 +1052,6 @@ namespace AdventOfCode2024
                     if (nextRow < 0 || nextRow >= rows) continue;
                     int nextCol = col + colDirections[i];
                     if (nextCol < 0 || nextCol >= cols) continue;
-                    //if (visited[nextRow, nextCol]) continue;
-                    //visited[nextRow, nextCol] = true;
                     if (map[row][col] + 1 == map[nextRow][nextCol])
                     {
                         if (map[nextRow][nextCol] == '9')
@@ -1051,6 +1062,42 @@ namespace AdventOfCode2024
                             }
 
                             endPoints[nextRow, nextCol] = true;
+                        }
+                        else
+                        {
+                            queue.Enqueue((nextRow, nextCol));
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        static int CalculateTrailheadScorePart2(string[] map, int startRow, int startCol)
+        {
+            var result = 0;
+            var rows = map.Length;
+            var cols = map[0].Length;
+            var queue = new Queue<(int, int)>();
+
+            queue.Enqueue((startRow, startCol));
+            var rowDirections = new[] { -1, 1, 0, 0 };
+            var colDirections = new[] { 0, 0, -1, 1 };
+            while (queue.Count > 0)
+            {
+                (int row, int col) = queue.Dequeue();
+                for (var i = 0; i < 4; i++)
+                {
+                    int nextRow = row + rowDirections[i];
+                    if (nextRow < 0 || nextRow >= rows) continue;
+                    int nextCol = col + colDirections[i];
+                    if (nextCol < 0 || nextCol >= cols) continue;
+                    if (map[row][col] + 1 == map[nextRow][nextCol])
+                    {
+                        if (map[nextRow][nextCol] == '9')
+                        {
+                            result++;
                         }
                         else
                         {
