@@ -11,12 +11,12 @@ namespace AdventOfCode2024
             //Day3.Solve();
             //Day4.Solve();
             //Day5.Solve();
-            //Day6.Solve();
+            Day6.Solve();
             //Day7.Solve();
             //Day8.Solve();
             //Day9.Solve();
             //Day10.Solve();
-            Day11.Solve();
+            //Day11.Solve();
         }
     }
 
@@ -546,35 +546,83 @@ namespace AdventOfCode2024
             };
             var useSample = false;
             var lines = useSample ? sampleInput : Helpers.LoadInput("day6.txt");
-            int row = -1, col = -1;
+            int startRow = -1, startCol = -1;
+            var rows = lines.Length;
+            var cols = lines[0].Length;
             char direction = '^';
-            for (var r = 0; r < lines.Length; r++)
+
+            var map = new char[rows, cols];
+            for (var r = 0; r < rows; r++)
             {
-                for (var c = 0; c < lines[r].Length; c++)
+                for (var c = 0; c < cols; c++)
                 {
-                    if (lines[r][c] == '^')
+                    map[r, c] = lines[r][c];
+                }
+            }
+
+            for (var r = 0; r < rows; r++)
+            {
+                for (var c = 0; c < cols; c++)
+                {
+                    if (map[r, c] == '^')
                     {
-                        row = r;
-                        col = c;
+                        startRow = r;
+                        startCol = c;
                         break;
                     }
                 }
 
-                if (row >= 0) break;
+                if (startRow >= 0) break;
             }
 
+            var row = startRow;
+            var col = startCol;
             var visited = new HashSet<int>();
             visited.Add(CoordsToValue(row, col));
             var endOfMap = false;
             while (!endOfMap)
             {
-                if (TryMove(lines, ref row, ref col, ref direction, ref endOfMap))
+                if (TryMove(map, rows, cols, ref row, ref col, ref direction, ref endOfMap))
                 {
                     visited.Add(CoordsToValue(row, col));
                 }
             }
 
             Console.WriteLine(visited.Count);
+
+            var possiblePlaces = 0;
+            for (var r = 0; r < rows; r++)
+            {
+                for (var c = 0; c < cols; c++)
+                {
+                    if (map[r, c] != '.') continue;
+                    var visited2 = new HashSet<(int row, int col, char direction)>();
+                    row = startRow;
+                    col = startCol;
+                    direction = '^';
+                    visited2.Add((row, col, direction));
+                    map[r, c] = '#';
+                    endOfMap = false;
+                    while (!endOfMap)
+                    {
+                        if (TryMove(map, rows, cols, ref row, ref col, ref direction, ref endOfMap))
+                        {
+                            if (visited2.Contains((row, col, direction)))
+                            {
+                                // Added a loop
+                                possiblePlaces++;
+                                break;
+                            }
+
+                            visited2.Add((row, col, direction));
+                        }
+                    }
+
+                    map[r, c] = '.';
+                }
+            }
+
+            Console.WriteLine(possiblePlaces);
         }
 
         static int CoordsToValue(int row, int col)
@@ -593,7 +641,7 @@ namespace AdventOfCode2024
             }
         }
 
-        static bool TryMove(string[] map, ref int row, ref int col, ref char direction, ref bool endOfMap)
+        static bool TryMove(char[,] map, int rows, int cols, ref int row, ref int col, ref char direction, ref bool endOfMap)
         {
             endOfMap = false;
             switch (direction)
@@ -605,7 +653,7 @@ namespace AdventOfCode2024
                         return false;
                     }
 
-                    if (map[row - 1][col] == '#')
+                    if (map[row - 1, col] == '#')
                     {
                         direction = ChangeDirection(direction);
                         return false;
@@ -614,13 +662,13 @@ namespace AdventOfCode2024
                     row--;
                     return true;
                 case 'v':
-                    if (row == map.Length - 1)
+                    if (row == rows - 1)
                     {
                         endOfMap = true;
                         return false;
                     }
 
-                    if (map[row + 1][col] == '#')
+                    if (map[row + 1, col] == '#')
                     {
                         direction = ChangeDirection(direction);
                         return false;
@@ -635,7 +683,7 @@ namespace AdventOfCode2024
                         return false;
                     }
 
-                    if (map[row][col - 1] == '#')
+                    if (map[row, col - 1] == '#')
                     {
                         direction = ChangeDirection(direction);
                         return false;
@@ -644,13 +692,13 @@ namespace AdventOfCode2024
                     col--;
                     return true;
                 case '>':
-                    if (col == map[0].Length - 1)
+                    if (col == cols - 1)
                     {
                         endOfMap = true;
                         return false;
                     }
 
-                    if (map[row][col + 1] == '#')
+                    if (map[row, col + 1] == '#')
                     {
                         direction = ChangeDirection(direction);
                         return false;
