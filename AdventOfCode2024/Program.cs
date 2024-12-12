@@ -1354,6 +1354,21 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(totalCost);
+
+            totalCost = 0;
+            visited = new bool[rows, cols];
+            for (var row = 0; row < rows; row++)
+            {
+                for (var col = 0; col < cols; col++)
+                {
+                    if (!visited[row, col])
+                    {
+                        totalCost += CalculateCostPart2(input, rows, cols, row, col, visited);
+                    }
+                }
+            }
+
+            Console.WriteLine(totalCost);
         }
 
         private static long CalculateCost(string[] input, int rows, int cols, int startRow, int startCol, bool[,] visited)
@@ -1422,6 +1437,62 @@ namespace AdventOfCode2024
             }
 
             return perimeter * area;
+        }
+
+        private static long CalculateCostPart2(string[] input, int rows, int cols, int startRow, int startCol, bool[,] visited)
+        {
+            var letter = input[startRow][startCol];
+            var queue = new Queue<(int, int)>();
+            queue.Enqueue((startRow, startCol));
+            visited[startRow, startCol] = true;
+            var sides = 0;
+            var area = 0;
+            while (queue.Count > 0)
+            {
+                (int r, int c) = queue.Dequeue();
+                area++;
+                if (IsCorner(input, rows, cols, r, c, -1, -1)) sides++;
+                if (IsCorner(input, rows, cols, r, c, -1, 1)) sides++;
+                if (IsCorner(input, rows, cols, r, c, 1, -1)) sides++;
+                if (IsCorner(input, rows, cols, r, c, 1, 1)) sides++;
+
+                if (r > 0 && input[r - 1][c] == letter && !visited[r - 1, c])
+                {
+                    visited[r - 1, c] = true;
+                    queue.Enqueue((r - 1, c));
+                }
+
+                if (r < rows - 1 && input[r + 1][c] == letter && !visited[r + 1, c])
+                {
+                    visited[r + 1, c] = true;
+                    queue.Enqueue((r + 1, c));
+                }
+
+                if (c > 0 && input[r][c - 1] == letter && !visited[r, c - 1])
+                {
+                    visited[r, c - 1] = true;
+                    queue.Enqueue((r, c - 1));
+                }
+
+                if (c < cols - 1 && input[r][c + 1] == letter && !visited[r, c + 1])
+                {
+                    visited[r, c + 1] = true;
+                    queue.Enqueue((r, c + 1));
+                }
+            }
+
+            return sides * area;
+        }
+
+        private static bool IsCorner(string[] input, int rows, int cols, int row, int col, int cornerRowDirection, int cornerColDirection)
+        {
+            int firstNeighborRow = row + cornerRowDirection;
+            int secondNeighborCol = col + cornerColDirection;
+            var current = input[row][col];
+            var firstNeighbor = firstNeighborRow >= 0 && firstNeighborRow < rows ? input[firstNeighborRow][col] : '.';
+            var secondNeighbor = secondNeighborCol >= 0 && secondNeighborCol < cols ? input[row][secondNeighborCol] : '.';
+            var diagonalNeigbor = firstNeighborRow >= 0 && firstNeighborRow < rows && secondNeighborCol >= 0 && secondNeighborCol < cols ? input[firstNeighborRow][secondNeighborCol] : '.';
+            return (current != firstNeighbor && current != secondNeighbor) || (current == firstNeighbor && current == secondNeighbor && current != diagonalNeigbor);
         }
     }
 
