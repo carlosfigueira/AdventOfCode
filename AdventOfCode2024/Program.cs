@@ -11,12 +11,13 @@ namespace AdventOfCode2024
             //Day3.Solve();
             //Day4.Solve();
             //Day5.Solve();
-            Day6.Solve();
+            //Day6.Solve();
             //Day7.Solve();
             //Day8.Solve();
             //Day9.Solve();
             //Day10.Solve();
             //Day11.Solve();
+            Day12.Solve();
         }
     }
 
@@ -1176,6 +1177,44 @@ namespace AdventOfCode2024
             }
         }
 
+        public static void SolveNaive()
+        {
+            var input = "125 17";
+            var list = input.Split(' ').ToList();
+            Console.WriteLine(string.Join(" ", list));
+            for (int i = 0; i < 15; i++)
+            {
+                var newList = new List<string>();
+                foreach (var item in list)
+                {
+                    newList.AddRange(Expand(item));
+                }
+
+                list = newList;
+                Console.WriteLine($"({list.Count}) " + string.Join(" ", list));
+            }
+        }
+
+        static IEnumerable<string> Expand(string value)
+        {
+            if (value == "0")
+            {
+                yield return "1";
+            }
+            else if ((value.Length % 2) == 1)
+            {
+                yield return (long.Parse(value) * 2024).ToString();
+            }
+            else
+            {
+                var part1 = value.Substring(0, value.Length / 2).TrimStart('0');
+                var part2 = value.Substring(value.Length / 2).TrimStart('0'); ;
+                if (part1 == "") part1 = "0";
+                if (part2 == "") part2 = "0";
+                yield return part1;
+                yield return part2;
+            }
+        }
         public static void Solve()
         {
             var sampleInput = "125 17";
@@ -1279,6 +1318,112 @@ namespace AdventOfCode2024
         }
     }
 
+    class Day12
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "RRRRIICCFF",
+                "RRRRIICCCF",
+                "VVRRRCCFFF",
+                "VVRCCCJFFF",
+                "VVVVCJJCFE",
+                "VVIVCCJJEE",
+                "VVIIICJJEE",
+                "MIIIIIJJEE",
+                "MIIISIJEEE",
+                "MMMISSJEEE"
+            };
+            var useSample = false;
+            var input = useSample ? sampleInput : Helpers.LoadInput("day12.txt");
+
+            var rows = input.Length;
+            var cols = input[0].Length;
+            var visited = new bool[rows, cols];
+            var totalCost = 0L;
+            for (var row = 0; row < rows; row++)
+            {
+                for (var col = 0; col < cols; col++)
+                {
+                    if (!visited[row, col])
+                    {
+                        totalCost += CalculateCost(input, rows, cols, row, col, visited);
+                    }
+                }
+            }
+
+            Console.WriteLine(totalCost);
+        }
+
+        private static long CalculateCost(string[] input, int rows, int cols, int startRow, int startCol, bool[,] visited)
+        {
+            var letter = input[startRow][startCol];
+            var queue = new Queue<(int, int)>();
+            queue.Enqueue((startRow, startCol));
+            visited[startRow, startCol] = true;
+            var perimeter = 0;
+            var area = 0;
+            while (queue.Count > 0)
+            {
+                (int r, int c) = queue.Dequeue();
+                area++;
+                if (r == 0 || input[r - 1][c] != letter)
+                {
+                    perimeter++;
+                }
+                else
+                {
+                    if (!visited[r - 1, c])
+                    {
+                        visited[r - 1, c] = true;
+                        queue.Enqueue((r - 1, c));
+                    }
+                }
+
+                if (r == rows - 1 || input[r + 1][c] != letter)
+                {
+                    perimeter++;
+                }
+                else
+                {
+                    if (!visited[r + 1, c])
+                    {
+                        visited[r + 1, c] = true;
+                        queue.Enqueue((r + 1, c));
+                    }
+                }
+
+                if (c == 0 || input[r][c - 1] != letter)
+                {
+                    perimeter++;
+                }
+                else
+                {
+                    if (!visited[r, c - 1])
+                    {
+                        visited[r, c - 1] = true;
+                        queue.Enqueue((r, c - 1));
+                    }
+                }
+
+                if (c == cols - 1 || input[r][c + 1] != letter)
+                {
+                    perimeter++;
+                }
+                else
+                {
+                    if (!visited[r, c + 1])
+                    {
+                        visited[r, c + 1] = true;
+                        queue.Enqueue((r, c + 1));
+                    }
+                }
+            }
+
+            return perimeter * area;
+        }
+    }
 
     public class Helpers
     {
