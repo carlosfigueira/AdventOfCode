@@ -1567,6 +1567,17 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(totalTokens);
+
+            long totalTokensPart2 = 0;
+            foreach (var game in games)
+            {
+                if (TrySolvePart2(game, out var tokens))
+                {
+                    totalTokensPart2 += tokens;
+                }
+            }
+
+            Console.WriteLine(totalTokensPart2);
         }
 
         static bool TrySolve(Game game, out int tokens)
@@ -1576,6 +1587,26 @@ namespace AdventOfCode2024
             if (aP >= 0 && bP >= 0 &&
                 game.Prize.X == aP * game.ButtonA.X + bP * game.ButtonB.X &&
                 game.Prize.Y == aP * game.ButtonA.Y + bP * game.ButtonB.Y)
+            {
+                tokens = 3 * aP + bP;
+                return true;
+            }
+
+            tokens = -1;
+            return false;
+        }
+
+        static bool TrySolvePart2(Game game, out long tokens)
+        {
+            long ax = game.ButtonA.X, ay = game.ButtonA.Y,
+                bx = game.ButtonB.X, by = game.ButtonB.Y,
+                px = game.Prize.X + 10000000000000L, py = game.Prize.Y + 10000000000000L;
+
+            var bP = (ay * px - ax * py) / (ay * bx - ax * by);
+            var aP = (px - bP * bx) / ax;
+            if (aP >= 0 && bP >= 0 &&
+                px == aP * ax + bP * bx &&
+                py == aP * ay + bP * by)
             {
                 tokens = 3 * aP + bP;
                 return true;
