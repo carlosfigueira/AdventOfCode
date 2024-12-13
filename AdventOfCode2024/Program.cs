@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace AdventOfCode2024
 {
@@ -17,7 +18,8 @@ namespace AdventOfCode2024
             //Day9.Solve();
             //Day10.Solve();
             //Day11.Solve();
-            Day12.Solve();
+            //Day12.Solve();
+            Day13.Solve();
         }
     }
 
@@ -1493,6 +1495,94 @@ namespace AdventOfCode2024
             var secondNeighbor = secondNeighborCol >= 0 && secondNeighborCol < cols ? input[row][secondNeighborCol] : '.';
             var diagonalNeigbor = firstNeighborRow >= 0 && firstNeighborRow < rows && secondNeighborCol >= 0 && secondNeighborCol < cols ? input[firstNeighborRow][secondNeighborCol] : '.';
             return (current != firstNeighbor && current != secondNeighbor) || (current == firstNeighbor && current == secondNeighbor && current != diagonalNeigbor);
+        }
+    }
+
+    class Day13
+    {
+        public class Game
+        {
+            public (int X, int Y) ButtonA { get; set; }
+            public (int X, int Y) ButtonB { get; set; }
+            public (int X, int Y) Prize { get; set; }
+
+            static readonly Regex ButtonABRegex = new Regex(@"Button [A|B]: X\+(\d+), Y\+(\d+)");
+            static readonly Regex PrizeRegex = new Regex(@"Prize: X=(\d+), Y=(\d+)");
+            public static List<Game> Parse(string[] input)
+            {
+                var result = new List<Game>();
+                for (int i = 0; i < input.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(input[i])) continue;
+                    var matchA = ButtonABRegex.Match(input[i++]);
+                    var matchB = ButtonABRegex.Match(input[i++]);
+                    var matchPrize = PrizeRegex.Match(input[i++]);
+                    result.Add(new Game
+                    {
+                        ButtonA = GetValues(matchA),
+                        ButtonB = GetValues(matchB),
+                        Prize = GetValues(matchPrize)
+                    });
+                }
+
+                return result;
+            }
+            static (int X, int Y) GetValues(Match match)
+            {
+                return (int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value));
+            }
+        }
+
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "Button A: X+94, Y+34",
+                "Button B: X+22, Y+67",
+                "Prize: X=8400, Y=5400",
+                "",
+                "Button A: X+26, Y+66",
+                "Button B: X+67, Y+21",
+                "Prize: X=12748, Y=12176",
+                "",
+                "Button A: X+17, Y+86",
+                "Button B: X+84, Y+37",
+                "Prize: X=7870, Y=6450",
+                "",
+                "Button A: X+69, Y+23",
+                "Button B: X+27, Y+71",
+                "Prize: X=18641, Y=10279",
+            };
+            var useSample = false;
+            var input = useSample ? sampleInput : Helpers.LoadInput("day13.txt");
+
+            var games = Game.Parse(input);
+            int totalTokens = 0;
+            foreach (var game in games)
+            {
+                if (TrySolve(game, out var tokens))
+                {
+                    totalTokens += tokens;
+                }
+            }
+
+            Console.WriteLine(totalTokens);
+        }
+
+        static bool TrySolve(Game game, out int tokens)
+        {
+            var bP = (game.ButtonA.Y * game.Prize.X - game.ButtonA.X * game.Prize.Y) / (game.ButtonA.Y * game.ButtonB.X - game.ButtonA.X * game.ButtonB.Y);
+            var aP = (game.Prize.X - bP * game.ButtonB.X) / game.ButtonA.X;
+            if (aP >= 0 && bP >= 0 &&
+                game.Prize.X == aP * game.ButtonA.X + bP * game.ButtonB.X &&
+                game.Prize.Y == aP * game.ButtonA.Y + bP * game.ButtonB.Y)
+            {
+                tokens = 3 * aP + bP;
+                return true;
+            }
+
+            tokens = -1;
+            return false;
         }
     }
 
