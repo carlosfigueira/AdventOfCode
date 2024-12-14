@@ -19,7 +19,8 @@ namespace AdventOfCode2024
             //Day10.Solve();
             //Day11.Solve();
             //Day12.Solve();
-            Day13.Solve();
+            //Day13.Solve();
+            Day14.Solve();
         }
     }
 
@@ -1614,6 +1615,184 @@ namespace AdventOfCode2024
 
             tokens = -1;
             return false;
+        }
+    }
+
+    class Day14
+    {
+        class Robot
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int DX { get; set; }
+            public int DY { get; set; }
+
+            static readonly Regex LineRegex = new Regex(@"p=(?<x>\d+),(?<y>\d+) v=(?<dx>-?\d+),(?<dy>-?\d+)");
+            public static Robot Parse(string line)
+            {
+                var match = LineRegex.Match(line);
+                return new Robot
+                {
+                    X = int.Parse(match.Groups["x"].Value),
+                    Y = int.Parse(match.Groups["y"].Value),
+                    DX = int.Parse(match.Groups["dx"].Value),
+                    DY = int.Parse(match.Groups["dy"].Value),
+                };
+            }
+        }
+
+
+        public static void Solve()
+        {
+            var sampleInput = new[] {
+                "p=0,4 v=3,-3",
+                "p=6,3 v=-1,-3",
+                "p=10,3 v=-1,2",
+                "p=2,0 v=2,-1",
+                "p=0,0 v=1,3",
+                "p=3,0 v=-2,-2",
+                "p=7,6 v=-1,-3",
+                "p=3,0 v=-1,-2",
+                "p=9,3 v=2,3",
+                "p=7,3 v=-1,2",
+                "p=2,4 v=2,-3",
+                "p=9,5 v=-3,-3",
+            };
+
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day14.txt");
+            var input = lines.Select(l => Robot.Parse(l)).ToArray();
+
+            var rows = useSample ? 7 : 103;
+            var cols = useSample ? 11 : 101;
+
+            var midLineRows = rows / 2;
+            var midLineCols = cols / 2;
+
+            var quadrantSizes = new int[4];
+
+            foreach (var robot in input)
+            {
+                var newX = robot.X + robot.DX * 100 + cols * 100;
+                var newY = robot.Y + robot.DY * 100 + rows * 100;
+                newX = newX % cols;
+                newY = newY % rows;
+
+                if (newX == midLineCols || newY == midLineRows) continue; // on the axis, no quadrants
+                if (newY < midLineRows)
+                {
+                    if (newX > midLineCols)
+                    {
+                        quadrantSizes[0]++;
+                    }
+                    else
+                    {
+                        quadrantSizes[1]++;
+                    }
+                }
+                else
+                {
+                    if (newX < midLineCols)
+                    {
+                        quadrantSizes[2]++;
+                    }
+                    else
+                    {
+                        quadrantSizes[3]++;
+                    }
+                }
+            }
+
+            Console.WriteLine(quadrantSizes[0] * quadrantSizes[1] * quadrantSizes[2] * quadrantSizes[3]);
+
+            if (useSample)
+            {
+                Console.WriteLine("Part 2 only with real input");
+                return;
+            }
+
+            var seconds = 0;
+            var treeFound = false;
+            while (!treeFound)
+            {
+                seconds++;
+                var grid = new bool[rows, cols];
+
+                // Move all robots
+                foreach (var robot in input)
+                {
+                    var newCol = (robot.X + robot.DX + cols) % cols;
+                    var newRow = (robot.Y + robot.DY + rows) % rows;
+                    robot.X = newCol;
+                    robot.Y = newRow;
+                    grid[newRow, newCol] = true;
+                }
+
+                var clusterSize = 10;
+                // Look for cluster of {clusterSize} vertical robots
+                var searched = new bool[rows, cols];
+                foreach (var robot in input)
+                {
+                    var col = robot.X;
+                    var row = robot.Y;
+                    if (searched[row, col]) continue;
+                    int line = 1;
+                    searched[row, col] = true;
+                    row--;
+                    while (row >= 0)
+                    {
+                        if (grid[row, col] && !searched[row, col])
+                        {
+                            line++;
+                            searched[row, col] = true;
+                            row--;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    row = robot.Y + 1;
+                    while (row < rows)
+                    {
+                        if (grid[row, col] && !searched[row, col])
+                        {
+                            line++;
+                            searched[row, col] = true;
+                            row++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    if (line >= clusterSize)
+                    {
+                        for (int r = 0; r < rows; r++)
+                        {
+                            for (int c = 0; c < cols; c++)
+                            {
+                                Console.Write(grid[r, c] ? '#' : '.');
+                            }
+
+                            Console.WriteLine();
+                        }
+
+                        Console.WriteLine();
+                        Console.Write("Is this a tree (Y/N)? ");
+                        var answer = Console.ReadLine();
+                        if (answer?.ToUpper() == "Y")
+                        {
+                            treeFound = true;
+                            Console.WriteLine($"Found in {seconds} seconds.");
+                        }
+
+                        break;
+                    }
+                }
+            }
         }
     }
 
