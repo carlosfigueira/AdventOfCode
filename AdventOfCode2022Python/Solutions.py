@@ -491,5 +491,11 @@ def day12():
 
     print("Day 12, part 2: ", day12_part2)
 
-#day9() - incomplete
+#day2()
+#day3()
+#day4()
+#day5()
+#day6()
+#day8()
+#day9() #- incomplete
 day12()
