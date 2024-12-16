@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace AdventOfCode2024
@@ -20,7 +21,8 @@ namespace AdventOfCode2024
             //Day11.Solve();
             //Day12.Solve();
             //Day13.Solve();
-            Day14.Solve();
+            //Day14.Solve();
+            Day15.Solve();
         }
     }
 
@@ -1792,6 +1794,173 @@ namespace AdventOfCode2024
                         break;
                     }
                 }
+            }
+        }
+    }
+
+    class Day15
+    {
+        static bool IsDebug = false;
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "##########",
+                "#..O..O.O#",
+                "#......O.#",
+                "#.OO..O.O#",
+                "#..O@..O.#",
+                "#O#..O...#",
+                "#O..O..O.#",
+                "#.OO.O.OO#",
+                "#....O...#",
+                "##########",
+                "",
+                "<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^",
+                "vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v",
+                "><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<",
+                "<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^",
+                "^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><",
+                "^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^",
+                ">^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^",
+                "<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>",
+                "^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>",
+                "v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^",
+            };
+
+            //sampleInput = new[]
+            //{
+            //    "########",
+            //    "#..O.O.#",
+            //    "##@.O..#",
+            //    "#...O..#",
+            //    "#.#.O..#",
+            //    "#...O..#",
+            //    "#......#",
+            //    "########",
+            //    "",
+            //    "<^^>>>vv<v>>v<<",
+            //};
+
+            var useSample = false;
+            var input = useSample ? sampleInput : Helpers.LoadInput("day15.txt");
+
+            List<string> map1 = new List<string>();
+            int i;
+            int rows = 0;
+            int cols = input[0].Length;
+            for (i = 0; i < input.Length; i++)
+            {
+                if (string.IsNullOrEmpty(input[i]))
+                {
+                    rows = i;
+                    break;
+                }
+
+                map1.Add(input[i]);
+            }
+
+            var map = new char[rows, cols];
+            int initialRow = -1, initialCol = -1;
+            int r, c;
+            for (r = 0; r < rows; r++)
+            {
+                for (c = 0; c < cols; c++)
+                {
+                    map[r, c] = map1[r][c];
+                    if (map1[r][c] == '@')
+                    {
+                        initialRow = r;
+                        initialCol = c;
+                    }
+                }
+            }
+
+            DumpMap(map);
+
+            i++;
+            var sb = new StringBuilder();
+            for (; i < input.Length; i++)
+            {
+                sb.Append(input[i].Trim());
+            }
+
+            var instructions = sb.ToString();
+            r = initialRow;
+            c = initialCol;
+            foreach (var instruction in instructions)
+            {
+                int dr, dc;
+                if (IsDebug) Console.WriteLine("Move: " + instruction);
+                switch (instruction)
+                {
+                    case '^': dr = -1; dc = 0; break;
+                    case 'v': dr = 1; dc = 0; break;
+                    case '>': dr = 0; dc = 1; break;
+                    case '<': dr = 0; dc = -1; break;
+                    default: throw new Exception();
+                }
+
+                if (map[r + dr, c + dc] == '.')
+                {
+                    map[r + dr, c + dc] = '@';
+                    map[r, c] = '.';
+                    r = r + dr;
+                    c = c + dc;
+                }
+                else
+                {
+                    var boxesToPush = 1;
+                    while (map[r + dr * boxesToPush, c + dc * boxesToPush] == 'O')
+                    {
+                        boxesToPush++;
+                    }
+
+                    if (map[r + dr * boxesToPush, c + dc * boxesToPush] == '#')
+                    {
+                        // Cannot push
+                        if (IsDebug) { Console.WriteLine("No changes"); Console.WriteLine(); }
+                        continue;
+                    }
+
+                    map[r + dr * boxesToPush, c + dc * boxesToPush] = 'O';
+                    map[r + dr, c + dc] = '@';
+                    map[r, c] = '.';
+                    r = r + dr;
+                    c = c + dc;
+                }
+
+                DumpMap(map);
+            }
+
+            int result = 0;
+            for (r = 0; r < rows; r++)
+            {
+                for (c = 0; c < cols; c++)
+                {
+                    if (map[r,c] == 'O')
+                    {
+                        result += 100 * r + c;
+                    }
+                }
+            }
+
+            Console.WriteLine(result);
+        }
+
+        static void DumpMap(char[,] map)
+        {
+            if (IsDebug)
+            {
+                for (var r = 0; r < map.GetLength(0); r++)
+                {
+                    for (var c = 0; c < map.GetLength(1); c++)
+                    {
+                        Console.Write(map[r, c]);
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine();
             }
         }
     }
