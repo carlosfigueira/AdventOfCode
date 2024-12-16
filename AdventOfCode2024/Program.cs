@@ -1842,7 +1842,7 @@ namespace AdventOfCode2024
             //    "<^^>>>vv<v>>v<<",
             //};
 
-            var useSample = false;
+            var useSample = true;
             var input = useSample ? sampleInput : Helpers.LoadInput("day15.txt");
 
             List<string> map1 = new List<string>();
@@ -1876,7 +1876,7 @@ namespace AdventOfCode2024
                 }
             }
 
-            DumpMap(map);
+            DumpMap(map, true);
 
             i++;
             var sb = new StringBuilder();
@@ -1946,11 +1946,117 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(result);
+
+            map = new char[rows, cols * 2];
+            initialRow = -1; initialCol = -1;
+            for (r = 0; r < rows; r++)
+            {
+                for (c = 0; c < cols; c++)
+                {
+                    map[r, 2 * c] = map[r, 2 * c + 1] = map1[r][c];
+                    if (map1[r][c] == '@')
+                    {
+                        initialRow = r;
+                        initialCol = 2 * c;
+                        map[r, 2 * c + 1] = '.';
+                    }
+                    else if (map1[r][c] == 'O')
+                    {
+                        map[r, 2 * c] = '[';
+                        map[r, 2 * c + 1] = ']';
+                    }
+                }
+            }
+
+            // Not working yet
+            IsDebug = true;
+            r = initialRow;
+            c = initialCol;
+            DumpMap(map);
+            foreach (var instruction in instructions)
+            {
+                int dr, dc;
+                if (IsDebug) Console.WriteLine("Move: " + instruction);
+                switch (instruction)
+                {
+                    case '^': dr = -1; dc = 0; break;
+                    case 'v': dr = 1; dc = 0; break;
+                    case '>': dr = 0; dc = 1; break;
+                    case '<': dr = 0; dc = -1; break;
+                    default: throw new Exception();
+                }
+
+                TryMove(map, ref r, ref c, dr, dc, true);
+
+                DumpMap(map);
+            }
         }
 
-        static void DumpMap(char[,] map)
+        static bool TryMove(char[,] map, ref int r, ref int c, int dr, int dc, bool doMove)
         {
-            if (IsDebug)
+            var newR = r + dr;
+            var newC = c + dc;
+            char next = map[newR, newC];
+            if (next == '.')
+            {
+                if (doMove)
+                {
+                    map[newR, newC] = map[r, c];
+                    map[r, c] = '.';
+                    r = newR;
+                    c = newC;
+                }
+
+                return true;
+            }
+            else if (next == '[' || next == ']')
+            {
+                if (dr == 0)
+                {
+                    // Lateral push
+                    if (TryMove(map, ref newR, ref newC, dr, dc, doMove: false))
+                    {
+                        if (doMove)
+                        {
+                            TryMove(map, ref newR, ref newC, dr, dc, doMove: true);
+                            map[newR, newC] = map[r, c];
+                            map[r, c] = '.';
+                            r = newR;
+                            c = newC;
+                        }
+
+                        return true;
+                    }
+                }
+                else
+                {
+                    int otherBoxColumn = next == ']' ? c - 1 : c + 1;
+                    if (TryMove(map, ref newR, ref newC, dr, dc, doMove: false) && TryMove(map, ref newR, ref otherBoxColumn, dr, dc, doMove: false))
+                    {
+                        if (doMove)
+                        {
+                            var newR2 = newR;
+                            var newC2 = newC;
+                            TryMove(map, ref newR2, ref newC2, dr, dc, doMove: true);
+                            newR2 = newR;
+                            newC2 = otherBoxColumn;
+                            TryMove(map, ref newR2, ref newC2, dr, dc, doMove: true);
+
+                            map[newR, newC] = map[r, c];
+                            map[r, c] = '.';
+                            r = newR;
+                            c = newC;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        static void DumpMap(char[,] map, bool overrideDebug = false)
+        {
+            if (IsDebug || overrideDebug)
             {
                 for (var r = 0; r < map.GetLength(0); r++)
                 {
