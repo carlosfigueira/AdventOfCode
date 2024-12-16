@@ -22,7 +22,8 @@ namespace AdventOfCode2024
             //Day12.Solve();
             //Day13.Solve();
             //Day14.Solve();
-            Day15.Solve();
+            //Day15.Solve();
+            Day16.Solve();
         }
     }
 
@@ -1938,7 +1939,7 @@ namespace AdventOfCode2024
             {
                 for (c = 0; c < cols; c++)
                 {
-                    if (map[r,c] == 'O')
+                    if (map[r, c] == 'O')
                     {
                         result += 100 * r + c;
                     }
@@ -2071,6 +2072,128 @@ namespace AdventOfCode2024
         }
     }
 
+    public class Day16
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[] {
+                "###############",
+                "#.......#....E#",
+                "#.#.###.#.###.#",
+                "#.....#.#...#.#",
+                "#.###.#####.#.#",
+                "#.#.#.......#.#",
+                "#.#.#####.###.#",
+                "#...........#.#",
+                "###.#.#####.#.#",
+                "#...#.....#.#.#",
+                "#.#.#.###.#.#.#",
+                "#.....#...#.#.#",
+                "#.###.#.#.#.#.#",
+                "#S..#.....#...#",
+                "###############",
+            };
+
+            sampleInput = new[]
+            {
+                "#################",
+                "#...#...#...#..E#",
+                "#.#.#.#.#.#.#.#.#",
+                "#.#.#.#...#...#.#",
+                "#.#.#.#.###.#.#.#",
+                "#...#.#.#.....#.#",
+                "#.#.#.#.#.#####.#",
+                "#.#...#.#.#.....#",
+                "#.#.#####.#.###.#",
+                "#.#.#.......#...#",
+                "#.#.###.#####.###",
+                "#.#.#...#.....#.#",
+                "#.#.#.#####.###.#",
+                "#.#.#.........#.#",
+                "#.#.#.#########.#",
+                "#S#.............#",
+                "#################",
+            };
+
+            var useSample = false;
+            var input = useSample ? sampleInput : Helpers.LoadInput("day16.txt");
+
+            var rows = input.Length;
+            var cols = input[0].Length;
+            int endRow = 1, endCol = cols - 2;
+            int startRow = rows - 2, startCol = 1;
+            if (input[startRow][startCol] != 'S') throw new Exception();
+            if (input[endRow][endCol] != 'E') throw new Exception();
+
+            var queue = new PriorityQueue<(int, int, char, int), int>();
+            Dictionary<(int, int, char), int> lowerCost = new Dictionary<(int, int, char), int>();
+
+            queue.Enqueue((startRow, startCol, '>', 0), 0);
+            lowerCost.Add((startRow, startCol, '>'), 0);
+            while (queue.Count > 0)
+            {
+                (var row, var col, var direction, var cost) = queue.Dequeue();
+                (var dr, var dc) = DirectionToDeltas(direction);
+                if (input[row + dr][col + dc] == 'E')
+                {
+                    Console.WriteLine("Part 1: " + (cost + 1));
+                    break;
+                }
+
+                if (input[row + dr][col + dc] == '.')
+                {
+                    if (!lowerCost.TryGetValue((row + dr, col + dc, direction), out var nextCost) || (cost + 1) < nextCost)
+                    {
+                        lowerCost[(row + dr, col + dc, direction)] = cost + 1;
+                        queue.Enqueue((row + dr, col + dc, direction, cost + 1), cost + 1);
+                    }
+                }
+
+                foreach (var newDirection in new[] { RotateClockwise(direction), RotateCounterclockwise(direction) })
+                {
+                    (var newDR, var newDC) = DirectionToDeltas(newDirection);
+                    if (input[row + newDR][col + newDC] != '#')
+                    {
+                        if (!lowerCost.TryGetValue((row, col, newDirection), out var nextCost) || (cost + 1000) < nextCost)
+                        {
+                            lowerCost[(row, col, newDirection)] = cost + 1000;
+                            queue.Enqueue((row, col, newDirection, cost + 1000), cost + 1000);
+                        }
+                    }
+                }
+            }
+        }
+
+        static char RotateClockwise(char direction)
+        {
+            switch (direction)
+            {
+                case 'v': return '<';
+                case '<': return '^';
+                case '^': return '>';
+                default: return 'v';
+            }
+        }
+
+        static char RotateCounterclockwise(char direction)
+        {
+            switch (direction)
+            {
+                case 'v': return '>';
+                case '>': return '^';
+                case '^': return '<';
+                default: return 'v';
+            }
+        }
+
+        static (int deltaRow, int deltaCol) DirectionToDeltas(char direction)
+        {
+            var dr = direction == '^' ? -1 : direction == 'v' ? 1 : 0;
+            var dc = direction == '<' ? -1 : direction == '>' ? 1 : 0;
+            return (dr, dc);
+        }
+    }
+
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
@@ -2078,5 +2201,4 @@ namespace AdventOfCode2024
             return File.ReadAllLines(Path.Combine("inputs", fileName));
         }
     }
-
 }
