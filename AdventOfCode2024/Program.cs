@@ -22,8 +22,8 @@ namespace AdventOfCode2024
             //Day12.Solve();
             //Day13.Solve();
             //Day14.Solve();
-            //Day15.Solve();
-            Day16.Solve();
+            Day15.Solve();
+            //Day16.Solve();
         }
     }
 
@@ -1843,7 +1843,20 @@ namespace AdventOfCode2024
             //    "<^^>>>vv<v>>v<<",
             //};
 
-            var useSample = true;
+            //sampleInput = new[]
+            //{
+            //    "#######",
+            //    "#...#.#",
+            //    "#.....#",
+            //    "#..OO@#",
+            //    "#..O..#",
+            //    "#.....#",
+            //    "#######",
+            //    "",
+            //    "<vv<<^^<<^^",
+            //};
+
+            var useSample = false;
             var input = useSample ? sampleInput : Helpers.LoadInput("day15.txt");
 
             List<string> map1 = new List<string>();
@@ -1948,6 +1961,8 @@ namespace AdventOfCode2024
 
             Console.WriteLine(result);
 
+            // ************** Part 2 *************
+
             map = new char[rows, cols * 2];
             initialRow = -1; initialCol = -1;
             for (r = 0; r < rows; r++)
@@ -1969,10 +1984,12 @@ namespace AdventOfCode2024
                 }
             }
 
-            // Not working yet
-            IsDebug = true;
+            cols *= 2;
+
+            // IsDebug = true;
             r = initialRow;
             c = initialCol;
+            Console.WriteLine("Initial state:");
             DumpMap(map);
             foreach (var instruction in instructions)
             {
@@ -1987,13 +2004,31 @@ namespace AdventOfCode2024
                     default: throw new Exception();
                 }
 
-                TryMove(map, ref r, ref c, dr, dc, true);
+                if (TryMove(map, r, c, dr, dc, true))
+                {
+                    r += dr;
+                    c += dc;
+                }
 
                 DumpMap(map);
             }
+
+            result = 0;
+            for (r = 0; r < rows; r++)
+            {
+                for (c = 0; c < cols; c++)
+                {
+                    if (map[r, c] == '[')
+                    {
+                        result += 100 * r + c;
+                    }
+                }
+            }
+
+            Console.WriteLine("Part 2: " + result);
         }
 
-        static bool TryMove(char[,] map, ref int r, ref int c, int dr, int dc, bool doMove)
+        static bool TryMove(char[,] map, int r, int c, int dr, int dc, bool doMove)
         {
             var newR = r + dr;
             var newC = c + dc;
@@ -2015,11 +2050,11 @@ namespace AdventOfCode2024
                 if (dr == 0)
                 {
                     // Lateral push
-                    if (TryMove(map, ref newR, ref newC, dr, dc, doMove: false))
+                    if (TryMove(map, newR, newC, dr, dc, doMove: false))
                     {
                         if (doMove)
                         {
-                            TryMove(map, ref newR, ref newC, dr, dc, doMove: true);
+                            TryMove(map, newR, newC, dr, dc, doMove: true);
                             map[newR, newC] = map[r, c];
                             map[r, c] = '.';
                             r = newR;
@@ -2032,22 +2067,24 @@ namespace AdventOfCode2024
                 else
                 {
                     int otherBoxColumn = next == ']' ? c - 1 : c + 1;
-                    if (TryMove(map, ref newR, ref newC, dr, dc, doMove: false) && TryMove(map, ref newR, ref otherBoxColumn, dr, dc, doMove: false))
+                    if (TryMove(map, newR, newC, dr, dc, doMove: false) && TryMove(map, newR, otherBoxColumn, dr, dc, doMove: false))
                     {
                         if (doMove)
                         {
                             var newR2 = newR;
                             var newC2 = newC;
-                            TryMove(map, ref newR2, ref newC2, dr, dc, doMove: true);
+                            TryMove(map, newR2, newC2, dr, dc, doMove: true);
                             newR2 = newR;
                             newC2 = otherBoxColumn;
-                            TryMove(map, ref newR2, ref newC2, dr, dc, doMove: true);
+                            TryMove(map, newR2, newC2, dr, dc, doMove: true);
 
                             map[newR, newC] = map[r, c];
                             map[r, c] = '.';
                             r = newR;
                             c = newC;
                         }
+
+                        return true;
                     }
                 }
             }
