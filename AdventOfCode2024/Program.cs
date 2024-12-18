@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -22,8 +23,9 @@ namespace AdventOfCode2024
             //Day12.Solve();
             //Day13.Solve();
             //Day14.Solve();
-            Day15.Solve();
+            //Day15.Solve();
             //Day16.Solve();
+            Day17.Solve();
         }
     }
 
@@ -2228,6 +2230,181 @@ namespace AdventOfCode2024
             var dr = direction == '^' ? -1 : direction == 'v' ? 1 : 0;
             var dc = direction == '<' ? -1 : direction == '>' ? 1 : 0;
             return (dr, dc);
+        }
+    }
+
+    public class Day17
+    {
+        enum OpCode
+        {
+            adv = 0,
+            bxl = 1,
+            bst = 2,
+            jnz = 3,
+            bxc = 4,
+            @out = 5,
+            bdv = 6,
+            cdv = 7
+        }
+
+        class Computer
+        {
+            public static bool IsDebug = true;
+
+            public int RegA { get; set; }
+            public int RegB { get; set; }
+            public int RegC { get; set; }
+            public int IP { get; set; }
+            public List<int> Instructions { get; set; }
+
+            public Computer(int regA, int regB, int regC, IEnumerable<int> instructions)
+            {
+                this.RegA = regA;
+                this.RegB = regB;
+                this.RegC = regC;
+                this.IP = 0;
+                this.Instructions = new List<int>(instructions);
+            }
+
+            void DumpState(IEnumerable<int> outputs)
+            {
+                Console.WriteLine($"  Registers: {RegA},{RegB},{RegC}");
+                Console.Write("  ");
+                for (int i = 0; i < Instructions.Count; i++)
+                {
+                    if (i > 0) Console.Write(",");
+                    if (i == IP) Console.Write("(");
+                    if ((i % 2) == 0)
+                    {
+                        Console.Write((OpCode)Instructions[i]);
+                    }
+                    else
+                    {
+                        Console.Write(Instructions[i]);
+                    }
+                    if (i == IP) Console.Write(")");
+                }
+                Console.WriteLine();
+                Console.WriteLine("  Outputs: " + string.Join(",", outputs));
+                Console.WriteLine();
+            }
+
+            public List<int> Run()
+            {
+                var result = new List<int>();
+                if (IsDebug)
+                {
+                    Console.WriteLine($"Initial state");
+                    DumpState(result);
+                }
+
+                while (this.IP < this.Instructions.Count)
+                {
+                    var opcode = (OpCode)this.Instructions[IP];
+                    var arg = this.Instructions[IP + 1];
+                    this.IP += 2;
+                    switch (opcode)
+                    {
+                        case OpCode.@out:
+                            result.Add(this.GetComboOperand(arg) % 8);
+                            break;
+                        case OpCode.adv:
+                            this.RegA /= 1 << this.GetComboOperand(arg);
+                            break;
+                        case OpCode.bdv:
+                            this.RegB = this.RegA / (1 << this.GetComboOperand(arg));
+                            break;
+                        case OpCode.cdv:
+                            this.RegC = this.RegA / (1 << this.GetComboOperand(arg));
+                            break;
+                        case OpCode.jnz:
+                            if (this.RegA != 0)
+                            {
+                                this.IP = arg;
+                            }
+
+                            break;
+                        case OpCode.bst:
+                            this.RegB = this.GetComboOperand(arg) % 8;
+                            break;
+                        case OpCode.bxl:
+                            this.RegB ^= arg;
+                            break;
+                        case OpCode.bxc:
+                            this.RegB ^= this.RegC;
+                            break;
+                        default:
+                            throw new Exception();
+                    }
+
+                    if (IsDebug) DumpState(result);
+                }
+
+                return result;
+            }
+
+            private int GetComboOperand(int value)
+            {
+                switch (value)
+                {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                        return value;
+                    case 4:
+                        return this.RegA;
+                    case 5:
+                        return this.RegB;
+                    case 6:
+                        return this.RegC;
+                    default:
+                        throw new Exception();
+                }
+            }
+        }
+
+        static void TestCases()
+        {
+            Computer.IsDebug = false;
+            var tests = new List<(int, int, int, string)>
+            {
+                ( 0, 0, 9, "2,6" ),
+                ( 10, 0, 0, "5,0,5,1,5,4" ),
+                ( 2024, 0, 0, "0,1,5,4,3,0" ),
+                ( 0, 29, 0, "1,7" ),
+                ( 0, 2024, 43690, "4,0" )
+            };
+            foreach (var test in tests)
+            {
+                (var a, var b, var c, var instr) = test;
+                var comp = new Computer(a, b, c, instr.Split(',').Select(p => int.Parse(p)));
+                var output = comp.Run();
+                Console.WriteLine($"Result: {comp.RegA}, {comp.RegB}, {comp.RegC} - {string.Join(",", output)}");
+            }
+        }
+        public static void Solve()
+        {
+            //TestCases();
+            var sampleInput = new[]
+            {
+                "Register A: 729",
+                "Register B: 0",
+                "Register C: 0",
+                "",
+                "Program: 0,1,5,4,3,0"
+            };
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day17.txt");
+
+            var registers = lines.Take(3).Select(l => int.Parse(l.Substring(l.IndexOf(':') + 1))).ToArray();
+            if (registers.Length != 3) throw new Exception();
+            var program = lines.Skip(4).First();
+            if (!program.StartsWith("Program: ")) throw new Exception();
+            var instructions = program.Substring("Program: ".Length).Split(',').Select(p => int.Parse(p));
+            var computer = new Computer(registers[0], registers[1], registers[2], instructions);
+
+            Console.WriteLine(string.Join(",", computer.Run()));
         }
     }
 
