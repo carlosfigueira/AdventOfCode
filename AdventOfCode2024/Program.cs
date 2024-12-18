@@ -2514,6 +2514,63 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(resultPart1);
+
+            int resultPart2;
+            do
+            {
+                map = new char[rows, cols];
+                for (var r = 0; r < rows; r++)
+                {
+                    for (var c = 0; c < cols; c++)
+                    {
+                        map[r, c] = '.';
+                    }
+                }
+
+                foreach (var byteAddress in byteAddresses.Take(bytesFallen))
+                {
+                    (var row, var col) = byteAddress;
+                    map[row, col] = '#';
+                }
+
+                queue = new Queue<(int, int, int)>();
+                queue.Enqueue((0, 0, 0));
+                resultPart2 = -1;
+
+                while (queue.Count > 0)
+                {
+                    //dumpMap();
+                    (var curRow, var curCol, var curCost) = queue.Dequeue();
+                    foreach (var direction in directions)
+                    {
+                        (var dr, var dc) = direction;
+                        var nextRow = curRow + dr;
+                        var nextCol = curCol + dc;
+                        var nextCost = curCost + 1;
+                        if (nextRow == rows - 1 && nextCol == cols - 1)
+                        {
+                            resultPart2 = nextCost;
+                            break;
+                        }
+
+                        if (0 <= nextRow && nextRow < rows && 0 <= nextCol && nextCol < cols && map[nextRow, nextCol] == '.')
+                        {
+                            map[nextRow, nextCol] = 'O';
+                            queue.Enqueue((nextRow, nextCol, nextCost));
+                        }
+                    }
+
+                    if (resultPart2 > 0) break;
+                }
+
+                if (resultPart2 > 0)
+                {
+                    bytesFallen++;
+                }
+            } while (resultPart2 > 0);
+
+            (var lastRow, var lastCol) = byteAddresses[bytesFallen - 1];
+            Console.WriteLine($"Part 2: {lastRow},{lastCol}");
         }
     }
 
