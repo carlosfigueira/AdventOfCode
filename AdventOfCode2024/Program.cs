@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -25,7 +26,8 @@ namespace AdventOfCode2024
             //Day14.Solve();
             //Day15.Solve();
             //Day16.Solve();
-            Day17.Solve();
+            //Day17.Solve();
+            Day18.Solve();
         }
     }
 
@@ -2405,6 +2407,113 @@ namespace AdventOfCode2024
             var computer = new Computer(registers[0], registers[1], registers[2], instructions);
 
             Console.WriteLine(string.Join(",", computer.Run()));
+        }
+    }
+
+    class Day18
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "5,4",
+                "4,2",
+                "4,5",
+                "3,0",
+                "2,1",
+                "6,3",
+                "2,4",
+                "1,5",
+                "0,6",
+                "3,3",
+                "2,6",
+                "5,1",
+                "1,2",
+                "5,5",
+                "2,5",
+                "6,5",
+                "1,4",
+                "0,4",
+                "6,4",
+                "1,1",
+                "6,1",
+                "1,0",
+                "0,5",
+                "1,6",
+                "2,0",
+            };
+
+            var useSample = false;
+            var input = useSample ? sampleInput : Helpers.LoadInput("day18.txt");
+            var byteAddresses = input.Select(row =>
+            {
+                var parts = row.Split(',');
+                return (int.Parse(parts[0]), int.Parse(parts[1]));
+            }).ToArray();
+
+            var rows = useSample ? 7 : 71;
+            var cols = useSample ? 7 : 71;
+            var bytesFallen = useSample ? 12 : 1024;
+
+            var map = new char[rows, cols];
+            for (var r = 0; r < rows; r++)
+            {
+                for (var c = 0; c < cols; c++)
+                {
+                    map[r, c] = '.';
+                }
+            }
+
+            foreach (var byteAddress in byteAddresses.Take(bytesFallen))
+            {
+                (var row, var col) = byteAddress;
+                map[row, col] = '#';
+            }
+
+            var dumpMap = () =>
+            {
+                for (var r = 0; r < rows; r++)
+                {
+                    for (var c = 0; c < cols; c++)
+                    {
+                        Console.Write(map[r, c]);
+                    }
+                    Console.WriteLine();
+                }
+                Console.WriteLine();
+            };
+
+            var queue = new Queue<(int, int, int)>();
+            queue.Enqueue((0, 0, 0));
+            var directions = new List<(int dr, int dc)> { (-1, 0), (1, 0), (0, -1), (0, 1) };
+            var resultPart1 = -1;
+            while (queue.Count > 0)
+            {
+                //dumpMap();
+                (var curRow, var curCol, var curCost) = queue.Dequeue();
+                foreach (var direction in directions)
+                {
+                    (var dr, var dc) = direction;
+                    var nextRow = curRow + dr;
+                    var nextCol = curCol + dc;
+                    var nextCost = curCost + 1;
+                    if (nextRow == rows - 1 && nextCol == cols - 1)
+                    {
+                        resultPart1 = nextCost;
+                        break;
+                    }
+
+                    if (0 <= nextRow && nextRow < rows && 0 <= nextCol && nextCol < cols && map[nextRow, nextCol] == '.')
+                    {
+                        map[nextRow, nextCol] = 'O';
+                        queue.Enqueue((nextRow, nextCol, nextCost));
+                    }
+                }
+
+                if (resultPart1 > 0) break;
+            }
+
+            Console.WriteLine(resultPart1);
         }
     }
 
