@@ -27,7 +27,8 @@ namespace AdventOfCode2024
             //Day15.Solve();
             //Day16.Solve();
             //Day17.Solve();
-            Day18.Solve();
+            //Day18.Solve();
+            Day19.Solve();
         }
     }
 
@@ -2574,6 +2575,83 @@ namespace AdventOfCode2024
         }
     }
 
+    class Day19
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "r, wr, b, g, bwu, rb, gb, br",
+                "",
+                "brwrr",
+                "bggr",
+                "gbbr",
+                "rrbgbr",
+                "ubwu",
+                "bwurrg",
+                "brgr",
+                "bbrgwb",
+            };
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day19.txt");
+            var patterns = lines[0].Split(',').Select(p => p.Trim()).ToArray();
+            var tests = lines.Skip(2).ToArray();
+
+            var part1Result = 0;
+            for (var iTest = 0; iTest < tests.Length; iTest++)
+            {
+                var test = tests[iTest];
+                var canCreateUpTo = new bool[test.Length + 1];
+                canCreateUpTo[0] = true;
+                for (var i = 1; i <= test.Length; i++)
+                {
+                    foreach (var pattern in patterns)
+                    {
+                        var patternLength = pattern.Length;
+                        if (patternLength <= i && canCreateUpTo[i - patternLength] && test.Substring(i - patternLength, patternLength) == pattern)
+                        {
+                            canCreateUpTo[i] = true;
+                            break;
+                        }
+                    }
+                }
+                var pass = canCreateUpTo[test.Length];
+                Console.WriteLine($"Test {iTest + 1} of {tests.Length}: {pass}");
+
+                if (pass)
+                {
+                    part1Result++;
+                }
+            }
+
+            Console.WriteLine(part1Result);
+
+            var part2Result = 0L;
+            for (var iTest = 0; iTest < tests.Length; iTest++)
+            {
+                var test = tests[iTest];
+                var waysToCreateUpTo = new long[test.Length + 1];
+                waysToCreateUpTo[0] = 1;
+                for (var i = 1; i <= test.Length; i++)
+                {
+                    foreach (var pattern in patterns)
+                    {
+                        var patternLength = pattern.Length;
+                        if (patternLength <= i && waysToCreateUpTo[i - patternLength] > 0 && test.Substring(i - patternLength, patternLength) == pattern)
+                        {
+                            waysToCreateUpTo[i] += waysToCreateUpTo[i - patternLength];
+                        }
+                    }
+                }
+                var ways = waysToCreateUpTo[test.Length];
+                Console.WriteLine($"Test {iTest + 1} of {tests.Length}: {ways}");
+
+                part2Result += ways;
+            }
+
+            Console.WriteLine(part2Result);
+        }
+    }
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
