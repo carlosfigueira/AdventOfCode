@@ -28,7 +28,8 @@ namespace AdventOfCode2024
             //Day16.Solve();
             //Day17.Solve();
             //Day18.Solve();
-            Day19.Solve();
+            //Day19.Solve();
+            Day20.Solve();
         }
     }
 
@@ -2652,6 +2653,180 @@ namespace AdventOfCode2024
             Console.WriteLine(part2Result);
         }
     }
+
+    class Day20
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "###############",
+                "#...#...#.....#",
+                "#.#.#.#.#.###.#",
+                "#S#...#.#.#...#",
+                "#######.#.#.###",
+                "#######.#.#...#",
+                "#######.#.###.#",
+                "###..E#...#...#",
+                "###.#######.###",
+                "#...###...#...#",
+                "#.#####.#.###.#",
+                "#.#...#.#.#...#",
+                "#.#.#.#.#.#.###",
+                "#...#...#...###",
+                "###############",
+            };
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day20.txt");
+
+            var rows = lines.Length;
+            var cols = lines[0].Length;
+            var costs = new int[rows, cols];
+            int startRow = -1, startCol = -1;
+            int endRow = -1, endCol = -1;
+            for (var r = 0; r < rows; r++)
+            {
+                for (var c = 0; c < cols; c++)
+                {
+                    costs[r, c] = -1;
+                    if (lines[r][c] == 'S')
+                    {
+                        startRow = r;
+                        startCol = c;
+                    }
+                    else if (lines[r][c] == 'E')
+                    {
+                        endRow = r;
+                        endCol = c;
+                    }
+                }
+            }
+
+            var prev = new Dictionary<(int row, int col), (int row, int col)>();
+            prev.Add((startRow, startCol), (-1, -1));
+            var queue = new Queue<(int, int)>();
+            queue.Enqueue((startRow, startCol));
+            while (queue.Count > 0)
+            {
+                var (r, c) = queue.Dequeue();
+                if (r == endRow && c == endCol) break;
+
+                if (c >= 1 && lines[r][c - 1] != '#' && !prev.ContainsKey((r, c - 1)))
+                {
+                    prev.Add((r, c - 1), (r, c));
+                    queue.Enqueue((r, c - 1));
+                }
+
+                if (c < cols - 1 && lines[r][c + 1] != '#' && !prev.ContainsKey((r, c + 1)))
+                {
+                    prev.Add((r, c + 1), (r, c));
+                    queue.Enqueue((r, c + 1));
+                }
+
+                if (r >= 1 && lines[r - 1][c] != '#' && !prev.ContainsKey((r - 1, c)))
+                {
+                    prev.Add((r - 1, c), (r, c));
+                    queue.Enqueue((r - 1, c));
+                }
+
+                if (r < rows - 1 && lines[r + 1][c] != '#' && !prev.ContainsKey((r + 1, c)))
+                {
+                    prev.Add((r + 1, c), (r, c));
+                    queue.Enqueue((r + 1, c));
+                }
+            }
+
+            var current = (endRow, endCol);
+            var cost = 0;
+            var path = new List<(int row, int col)>();
+
+            while (true)
+            {
+                var (r, c) = current;
+                costs[r, c] = cost;
+                path.Add(current);
+                if (r == startRow && c == startCol) break;
+                current = prev[current];
+                cost++;
+            }
+
+            path.Reverse();
+
+            var cheats = new Dictionary<(int r1, int c1, int r2, int c2), int>();
+            foreach (var step in path)
+            {
+                var (r, c) = step;
+                if (c > 1 && lines[r][c - 1] == '#' && costs[r, c - 2] >= 0 && costs[r, c] > costs[r, c - 2])
+                {
+                    // Cheat: skip from (r,c) to (r,c-2)
+                    cheats.Add((r, c, r, c - 2), costs[r, c] - costs[r, c - 2] - 2);
+                }
+                if (c < cols - 2 && lines[r][c + 1] == '#' && costs[r, c + 2] >= 0 && costs[r, c] > costs[r, c + 2])
+                {
+                    // Cheat: skip from (r,c) to (r,c+2)
+                    cheats.Add((r, c, r, c + 2), costs[r, c] - costs[r, c + 2] - 2);
+                }
+                if (r > 1 && lines[r - 1][c] == '#' && costs[r - 2, c] >= 0 && costs[r, c] > costs[r - 2, c])
+                {
+                    // Cheat: skip from (r,c) to (r-2,c)
+                    cheats.Add((r, c, r - 2, c), costs[r, c] - costs[r - 2, c] - 2);
+                }
+                if (r < rows - 2 && lines[r + 1][c] == '#' && costs[r + 2, c] >= 0 && costs[r, c] > costs[r + 2, c])
+                {
+                    // Cheat: skip from (r,c) to (r+2,c)
+                    cheats.Add((r, c, r + 2, c), costs[r, c] - costs[r + 2, c] - 2);
+                }
+            }
+
+            var pathReductionThreshold = useSample ? 10 : 100;
+            var part1Result = 0;
+            foreach (var cheat in cheats)
+            {
+                if (cheat.Value >= pathReductionThreshold)
+                {
+                    part1Result++;
+                }
+            }
+
+            Console.WriteLine(part1Result);
+        }
+
+        static int CalculateTime(
+            string[] map,
+            int rows, int cols,
+            int startRow, int startCol,
+            int endRow, int endCol,
+            int firstFakeWallRow = -1, int firstFakeWallCol = -1,
+            int secondFakeWallRow = -1, int secondFakeWallCol = -1)
+        {
+            var queue = new Queue<(int, int, int)>();
+            var visited = new bool[rows, cols];
+            visited[startRow, startCol] = true;
+            queue.Enqueue((startRow, startCol, 0));
+            var directions = new (int dr, int dc)[] {
+                (-1, 0), (1, 0), (0, -1), (0, 1)
+            };
+            while (queue.Count > 0)
+            {
+                (var row, var col, var cost) = queue.Dequeue();
+                foreach (var direction in directions)
+                {
+                    var nextRow = row + direction.dr;
+                    var nextCol = col + direction.dc;
+                    if (visited[nextRow, nextCol]) continue;
+                    if (nextRow == endRow && nextCol == endCol) return cost + 1;
+                    if (map[nextRow][nextCol] == '.' || (nextRow == firstFakeWallRow && nextCol == firstFakeWallCol) || (nextRow == secondFakeWallRow && nextCol == secondFakeWallCol))
+                    {
+                        visited[nextRow, nextCol] = true;
+                        queue.Enqueue((nextRow, nextCol, cost + 1));
+                    }
+                }
+            }
+
+            return int.MaxValue;
+        }
+    }
+
     public class Helpers
     {
         public static string[] LoadInput(string fileName)
