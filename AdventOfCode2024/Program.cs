@@ -2789,6 +2789,37 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(part1Result);
+
+            // Part 2
+            pathReductionThreshold = useSample ? 70 : 100;
+            var part2Result = 0;
+            cheats.Clear();
+            foreach (var step in path)
+            {
+                var (r, c) = step;
+                for (var dr = -20; dr <= 20; dr++)
+                {
+                    for (var dc = -20 + Math.Abs(dr); dc <= 20 - Math.Abs(dr); dc++)
+                    {
+                        var r2 = r + dr;
+                        var c2 = c + dc;
+                        if (0 <= r2 && r2 < rows && 0 <= c2 && c2 < cols && costs[r2, c2] >= 0 && costs[r, c] > costs[r2, c2])
+                        {
+                            // Cheat: skip from (r,c) to (r2,c2)
+                            cheats.Add((r, c, r2, c2), costs[r, c] - costs[r2, c2] - Math.Abs(dr) - Math.Abs(dc));
+                        }
+                    }
+                }
+            }
+            foreach (var cheat in cheats)
+            {
+                if (cheat.Value >= pathReductionThreshold)
+                {
+                    part2Result++;
+                }
+            }
+
+            Console.WriteLine(part2Result);
         }
 
         static int CalculateTime(
