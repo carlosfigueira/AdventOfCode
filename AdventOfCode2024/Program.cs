@@ -29,7 +29,8 @@ namespace AdventOfCode2024
             //Day17.Solve();
             //Day18.Solve();
             //Day19.Solve();
-            Day20.Solve();
+            //Day20.Solve();
+            Day23.Solve();
         }
     }
 
@@ -2821,40 +2822,100 @@ namespace AdventOfCode2024
 
             Console.WriteLine(part2Result);
         }
+    }
 
-        static int CalculateTime(
-            string[] map,
-            int rows, int cols,
-            int startRow, int startCol,
-            int endRow, int endCol,
-            int firstFakeWallRow = -1, int firstFakeWallCol = -1,
-            int secondFakeWallRow = -1, int secondFakeWallCol = -1)
+    class Day23
+    {
+        public static void Solve()
         {
-            var queue = new Queue<(int, int, int)>();
-            var visited = new bool[rows, cols];
-            visited[startRow, startCol] = true;
-            queue.Enqueue((startRow, startCol, 0));
-            var directions = new (int dr, int dc)[] {
-                (-1, 0), (1, 0), (0, -1), (0, 1)
-            };
-            while (queue.Count > 0)
+            var sampleInput = new[]
             {
-                (var row, var col, var cost) = queue.Dequeue();
-                foreach (var direction in directions)
+                "kh-tc",
+                "qp-kh",
+                "de-cg",
+                "ka-co",
+                "yn-aq",
+                "qp-ub",
+                "cg-tb",
+                "vc-aq",
+                "tb-ka",
+                "wh-tc",
+                "yn-cg",
+                "kh-ub",
+                "ta-co",
+                "de-co",
+                "tc-td",
+                "tb-wq",
+                "wh-td",
+                "ta-ka",
+                "td-qp",
+                "aq-cg",
+                "wq-ub",
+                "ub-vc",
+                "de-ta",
+                "wq-aq",
+                "wq-vc",
+                "wh-yn",
+                "ka-de",
+                "kh-ta",
+                "co-tc",
+                "wh-qp",
+                "tb-vc",
+                "td-yn",
+            };
+
+            var useSample = false;
+            var input = useSample ? sampleInput : Helpers.LoadInput("day23.txt");
+
+            var computerNames = new HashSet<string>();
+            var connections = new Dictionary<string, List<string>>();
+            foreach (var connection in input)
+            {
+                var c1 = connection.Substring(0, 2);
+                var c2 = connection.Substring(3, 2);
+                computerNames.Add(c1);
+                computerNames.Add(c2);
+                if (!connections.TryGetValue(c1, out var conn1))
                 {
-                    var nextRow = row + direction.dr;
-                    var nextCol = col + direction.dc;
-                    if (visited[nextRow, nextCol]) continue;
-                    if (nextRow == endRow && nextCol == endCol) return cost + 1;
-                    if (map[nextRow][nextCol] == '.' || (nextRow == firstFakeWallRow && nextCol == firstFakeWallCol) || (nextRow == secondFakeWallRow && nextCol == secondFakeWallCol))
+                    conn1 = new List<string>();
+                    connections.Add(c1, conn1);
+                }
+                conn1.Add(c2);
+                if (!connections.TryGetValue(c2, out var conn2))
+                {
+                    conn2 = new List<string>();
+                    connections.Add(c2, conn2);
+                }
+                conn2.Add(c1);
+            }
+
+            foreach (var conn in connections)
+            {
+                conn.Value.Sort();
+            }
+
+            var sortedComputerNames = computerNames.OrderBy(c => c).ToArray();
+            var connectedGroups = new List<List<string>>();
+            var groupsWithT = 0;
+            for (var i = 0; i < sortedComputerNames.Length - 2; i++)
+            {
+                var c1 = sortedComputerNames[i];
+                foreach (var c2 in connections[c1])
+                {
+                    if (c1.CompareTo(c2) > 0) continue;
+                    foreach (var c3 in connections[c2])
                     {
-                        visited[nextRow, nextCol] = true;
-                        queue.Enqueue((nextRow, nextCol, cost + 1));
+                        if (c2.CompareTo(c3) > 0) continue;
+                        if (connections[c1].Contains(c3))
+                        {
+                            connectedGroups.Add(new List<string> { c1, c2, c3 });
+                            if (c1[0] == 't' || c2[0] == 't' || c3[0] == 't') groupsWithT++;
+                        }
                     }
                 }
             }
 
-            return int.MaxValue;
+            Console.WriteLine(groupsWithT);
         }
     }
 
