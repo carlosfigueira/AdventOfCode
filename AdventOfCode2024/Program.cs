@@ -30,7 +30,8 @@ namespace AdventOfCode2024
             //Day18.Solve();
             //Day19.Solve();
             //Day20.Solve();
-            Day23.Solve();
+            Day22.Solve();
+            //Day23.Solve();
         }
     }
 
@@ -2821,6 +2822,52 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(part2Result);
+        }
+    }
+
+    class Day22
+    {
+        public static void Solve()
+        {
+            var sampleInput = new[]
+            {
+                "1",
+                "10",
+                "100",
+                "2024"
+            };
+            var useSample = false;
+            var lines = useSample ? sampleInput : Helpers.LoadInput("day22.txt");
+
+            var resultPart1 = 0L;
+            foreach (var line in lines)
+            {
+                resultPart1 += GenerateSecret(long.Parse(line), 2000);
+            }
+
+            Console.WriteLine(resultPart1);
+        }
+
+        private static long GenerateSecret(long initial, int iterations)
+        {
+            long value = initial;
+            // Console.WriteLine("Iteration 0: " + value);
+            for (var i = 0; i < iterations; i++)
+            {
+                value = MixAndPrune(value, v => v * 64);
+                value = MixAndPrune(value, v => v / 32);
+                value = MixAndPrune(value, v => v * 2048);
+                // Console.WriteLine($"Iteration {i + 1}: {value}");
+            }
+
+            return value;
+        }
+
+        static long MixAndPrune(long value, Func<long, long> operation)
+        {
+            var other = operation(value);
+            value ^= other;
+            return value & 0xFFFFFF;
         }
     }
 
