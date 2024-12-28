@@ -2846,6 +2846,69 @@ namespace AdventOfCode2024
             }
 
             Console.WriteLine(resultPart1);
+
+            // Sequence => (iLine => max value)
+            var allSequences = new Dictionary<(int, int, int, int), Dictionary<int, int>>();
+            for (var iLine = 0; iLine < lines.Length; iLine++)
+            {
+                var line = lines[iLine];
+                long value = long.Parse(line);
+                int v0, v1, v2, v3, v4;
+                v0 = (int)(value % 10);
+                value = Iterate(value);
+                v1 = (int)(value % 10);
+                value = Iterate(value);
+                v2 = (int)(value % 10);
+                value = Iterate(value);
+                v3 = (int)(value % 10);
+                for (int i = 3; i < 2000; i++)
+                {
+                    value = Iterate(value);
+                    v4 = (int)(value % 10);
+
+                    var sequence = (v1 - v0, v2 - v1, v3 - v2, v4 - v3);
+                    if (!allSequences.TryGetValue(sequence, out var dict))
+                    {
+                        dict = new Dictionary<int, int> { { iLine, v4 } };
+                        allSequences.Add(sequence, dict);
+                    }
+
+                    if (!dict.ContainsKey(iLine))
+                    {
+                        dict[iLine] = v4;
+                    }
+
+                    v0 = v1;
+                    v1 = v2;
+                    v2 = v3;
+                    v3 = v4;
+                }
+            }
+
+            var currMaxSum = 0;
+            (int, int, int, int) currMaxSequence = default;
+            foreach (var seq in allSequences)
+            {
+                var dict = seq.Value;
+                var (d1, d2, d3, d4) = seq.Key;
+                var sum = dict.Sum(pair => pair.Value);
+                if (sum > currMaxSum)
+                {
+                    currMaxSum = sum;
+                    currMaxSequence = seq.Key;
+                }
+            }
+
+            Console.WriteLine(currMaxSequence);
+            Console.WriteLine(currMaxSum);
+        }
+
+        private static long Iterate(long value)
+        {
+            value = MixAndPrune(value, v => v * 64);
+            value = MixAndPrune(value, v => v / 32);
+            value = MixAndPrune(value, v => v * 2048);
+            return value;
         }
 
         private static long GenerateSecret(long initial, int iterations)
@@ -2854,9 +2917,7 @@ namespace AdventOfCode2024
             // Console.WriteLine("Iteration 0: " + value);
             for (var i = 0; i < iterations; i++)
             {
-                value = MixAndPrune(value, v => v * 64);
-                value = MixAndPrune(value, v => v / 32);
-                value = MixAndPrune(value, v => v * 2048);
+                value = Iterate(value);
                 // Console.WriteLine($"Iteration {i + 1}: {value}");
             }
 
